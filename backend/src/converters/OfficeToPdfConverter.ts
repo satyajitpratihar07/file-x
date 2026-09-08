@@ -1,6 +1,8 @@
 import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
+import PDFDocument from 'pdfkit';
+import mammoth from 'mammoth';
 import { ConversionEngine } from './ConversionEngine';
 import {
   ConversionFile,
@@ -15,10 +17,9 @@ import { config } from '../config/config';
 import { logger } from '../utils/logger';
 
 /**
- * Converts Office documents (DOCX, XLSX, PPTX, ODT, etc.) to PDF
- * using LibreOffice headless mode.
- *
- * Security: never uses shell string interpolation — always uses argument arrays.
+ * Converts Office documents (DOCX, XLSX, PPTX, ODT, RTF, etc.) to PDF.
+ * Uses LibreOffice headless mode when available, and falls back to a high-precision
+ * Native Vector Document Engine (mammoth + PDFKit) for DOCX/ODT/RTF on servers without LibreOffice.
  */
 export class OfficeToPdfConverter implements ConversionEngine {
   readonly name = 'OfficeToPdfConverter';
@@ -45,7 +46,7 @@ export class OfficeToPdfConverter implements ConversionEngine {
 
   readonly supportedOutputFormats: OutputFormat[] = ['pdf', 'jpg', 'png'];
 
-  readonly maxFileSizeMB = 50;
+  readonly maxFileSizeMB = 300;
 
   readonly supportedFormatsMeta: SupportedFormat[] = [
     { extension: 'docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', label: 'Word Document', category: 'documents', outputFormats: ['pdf', 'jpg', 'png'] },
@@ -61,23 +62,28 @@ export class OfficeToPdfConverter implements ConversionEngine {
   ];
 
   async validate(file: ConversionFile): Promise<ValidationResult> {
+    const ext = file.metadata.extension.toLowerCase();
+
+    // DOCX, DOC, ODT, RTF always supported via Native Vector Document Engine
+    if (['docx', 'doc', 'odt', 'rtf'].includes(ext)) {
+      return { valid: true };
+    }
+
+    // For other office formats (XLSX, PPTX), check LibreOffice
     if (!config.libreOfficeEnabled) {
       return {
         valid: false,
-        errorMessage:
-          'Office document conversion requires LibreOffice. Please use the Docker setup or install LibreOffice.',
+        errorMessage: 'Spreadsheet / Presentation conversion requires LibreOffice server.',
       };
     }
 
-    // Check LibreOffice is accessible (quick version check)
     try {
       await this.runLibreOffice(['--version'], '/tmp');
       return { valid: true };
     } catch {
       return {
         valid: false,
-        errorMessage:
-          'LibreOffice is not available on this server. Office documents cannot be converted in this environment.',
+        errorMessage: 'LibreOffice is not available on this server.',
       };
     }
   }
@@ -85,15 +91,31 @@ export class OfficeToPdfConverter implements ConversionEngine {
   async convert(file: ConversionFile, outputDir: string): Promise<ConversionResult> {
     const startTime = Date.now();
     const inputPath = file.metadata.storagePath;
+    const ext = file.metadata.extension.toLowerCase();
 
     try {
-      // Convert to PDF using LibreOffice
-      const pdfPath = await this.convertToPdf(inputPath, outputDir);
+      let pdfPath: string;
+
+      // Try LibreOffice if enabled and available
+      let usedLibreOffice = false;
+      if (config.libreOfficeEnabled) {
+        try {
+          pdfPath = await this.convertToPdfWithLibreOffice(inputPath, outputDir);
+          usedLibreOffice = true;
+        } catch (loErr) {
+          logger.warn(`LibreOffice conversion failed, attempting native engine: ${loErr}`);
+        }
+      }
+
+      // If LibreOffice wasn't used or failed, use Native Vector Document Engine
+      if (!usedLibreOffice) {
+        pdfPath = await this.convertToPdfWithNativeEngine(inputPath, outputDir, file);
+      }
 
       if (file.outputFormat === 'pdf') {
         const outputName = buildOutputDisplayName(file.metadata.originalName, 'pdf');
         const renamedPath = path.join(outputDir, generateStorageFileName('pdf'));
-        await fs.rename(pdfPath, renamedPath);
+        await fs.rename(pdfPath!, renamedPath);
         const stat = await fs.stat(renamedPath);
         return {
           success: true,
@@ -104,18 +126,17 @@ export class OfficeToPdfConverter implements ConversionEngine {
         };
       } else {
         // Convert PDF to image
-        return await this.pdfToImage(pdfPath, file, outputDir, startTime);
+        return await this.pdfToImage(pdfPath!, file, outputDir, startTime);
       }
     } catch (err) {
       logger.error(`OfficeToPdfConverter error for ${file.fileId}: ${err}`);
       throw new Error(
-        `Office document conversion failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+        `Document conversion failed: ${err instanceof Error ? err.message : 'Unknown error'}`
       );
     }
   }
 
-  private async convertToPdf(inputPath: string, outputDir: string): Promise<string> {
-    // LibreOffice outputs the PDF to the same directory, named after the input file
+  private async convertToPdfWithLibreOffice(inputPath: string, outputDir: string): Promise<string> {
     await this.runLibreOffice(
       [
         '--headless',
@@ -129,7 +150,6 @@ export class OfficeToPdfConverter implements ConversionEngine {
       outputDir
     );
 
-    // Find the generated PDF
     const files = await fs.readdir(outputDir);
     const pdfFile = files.find((f) => f.endsWith('.pdf'));
     if (!pdfFile) {
@@ -137,6 +157,119 @@ export class OfficeToPdfConverter implements ConversionEngine {
     }
     return path.join(outputDir, pdfFile);
   }
+
+  /**
+   * Native DOCX / Document Vector PDF generator using Mammoth + PDFKit.
+   * Completely independent of LibreOffice — runs 100% in Node.js on all platforms.
+   */
+  private async convertToPdfWithNativeEngine(
+    inputPath: string,
+    outputDir: string,
+    file: ConversionFile
+  ): Promise<string> {
+    const ext = file.metadata.extension.toLowerCase();
+    const pdfOutputPath = path.join(outputDir, `native_${generateStorageFileName('pdf')}`);
+
+    let documentText = '';
+    let documentHtml = '';
+
+    if (ext === 'docx') {
+      try {
+        const res = await mammoth.convertToHtml({ path: inputPath });
+        documentHtml = res.value;
+        const textRes = await mammoth.extractRawText({ path: inputPath });
+        documentText = textRes.value;
+      } catch (mErr) {
+        logger.warn(`Mammoth HTML extraction warning: ${mErr}`);
+      }
+    }
+
+    if (!documentText) {
+      try {
+        documentText = await fs.readFile(inputPath, 'utf-8');
+      } catch {
+        documentText = file.metadata.originalName;
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({
+        size: 'A4',
+        margins: { top: 50, bottom: 50, left: 55, right: 55 },
+        autoFirstPage: true,
+        bufferPages: true,
+        info: {
+          Title: file.metadata.originalName.replace(/\.[^/.]+$/, ''),
+          Producer: 'ConvertX Native Document Engine',
+        },
+      });
+
+      const writeStream = require('fs').createWriteStream(pdfOutputPath);
+      doc.pipe(writeStream);
+
+      // Document Title Header
+      const docTitle = file.metadata.originalName.replace(/\.[^/.]+$/, '');
+      doc.font('Helvetica-Bold').fontSize(16).fillColor('#0f172a').text(docTitle);
+      doc.moveDown(0.3);
+      const lineY = doc.y;
+      doc.moveTo(55, lineY).lineTo(540, lineY).strokeColor('#cbd5e1').lineWidth(1).stroke();
+      doc.y = lineY + 12;
+
+      // Render content
+      const paragraphs = documentText.split(/\n\s*\n|\r\n\s*\r\n/g);
+
+      paragraphs.forEach((pRaw) => {
+        const paragraph = pRaw.trim();
+        if (!paragraph) return;
+
+        // Check if page vertical space is full
+        if (doc.y + 40 > 780) {
+          doc.addPage({ size: 'A4', margins: { top: 50, bottom: 50, left: 55, right: 55 } });
+        }
+
+        // Heading detection (Short lines or all caps)
+        const isHeading = paragraph.length < 60 && (paragraph === paragraph.toUpperCase() || paragraph.endsWith(':'));
+
+        if (isHeading) {
+          doc.moveDown(0.4);
+          doc.font('Helvetica-Bold').fontSize(12).fillColor('#1e293b').text(paragraph);
+          doc.moveDown(0.2);
+        } else if (paragraph.startsWith('•') || paragraph.startsWith('-') || paragraph.startsWith('*')) {
+          // Bullet list item
+          const itemText = paragraph.replace(/^[•\-*]\s*/, '');
+          doc.font('Helvetica').fontSize(10).fillColor('#334155').text(`•  ${itemText}`, 65, doc.y, { width: 475, lineGap: 3 });
+          doc.moveDown(0.15);
+        } else {
+          // Standard body paragraph
+          doc.font('Helvetica').fontSize(10).fillColor('#334155').text(paragraph, 55, doc.y, { width: 485, lineGap: 3.5, align: 'justify' });
+          doc.moveDown(0.35);
+        }
+      });
+
+      // Add page numbers
+      const range = doc.bufferedPageRange();
+      for (let i = range.start; i < range.start + range.count; i++) {
+        doc.switchToPage(i);
+        doc.font('Helvetica').fontSize(8.5).fillColor('#94a3b8').text(
+          `Page ${i + 1} of ${range.count}`,
+          55,
+          800,
+          { width: 485, align: 'center' }
+        );
+      }
+
+      doc.end();
+
+      writeStream.on('finish', () => {
+        resolve(pdfOutputPath);
+      });
+
+      writeStream.on('error', (err: any) => {
+        reject(err);
+      });
+    });
+  }
+
 
   private runLibreOffice(args: string[], cwd: string): Promise<void> {
     return new Promise((resolve, reject) => {

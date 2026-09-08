@@ -10,7 +10,7 @@ export const config = {
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
 
   // File limits
-  maxFileSizeMB: parseInt(process.env.MAX_FILE_SIZE_MB || '50', 10),
+  maxFileSizeMB: parseInt(process.env.MAX_FILE_SIZE_MB || '300', 10),
   maxFilesPerBatch: parseInt(process.env.MAX_FILES_PER_BATCH || '50', 10),
 
   // Storage

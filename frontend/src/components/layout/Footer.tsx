@@ -5,8 +5,17 @@ export function Footer() {
   const location = useLocation();
   const year = new Date().getFullYear();
 
-  // Hide footer on full-screen Photo Studio
-  if (location.pathname === '/photo-print') {
+  // Hide footer on full-screen Photo Studio & LaTeX Studio
+  const isFullScreen =
+    location.pathname === '/photo-print' ||
+    location.pathname === '/latex' ||
+    location.pathname === '/latex-studio' ||
+    location.pathname === '/code-pdf' ||
+    location.pathname.startsWith('/convert/code-to-pdf') ||
+    location.pathname.startsWith('/convert/latex-to-pdf') ||
+    location.pathname.startsWith('/convert/tex-to-pdf');
+
+  if (isFullScreen) {
     return null;
   }
 

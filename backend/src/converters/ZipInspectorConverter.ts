@@ -13,7 +13,7 @@ export class ZipInspectorConverter implements ConversionEngine {
   readonly supportedInputMimeTypes = ['application/zip', 'application/x-zip-compressed'];
   readonly supportedInputExtensions = ['zip'];
   readonly supportedOutputFormats: OutputFormat[] = ['pdf', 'txt'];
-  readonly maxFileSizeMB = 100;
+  readonly maxFileSizeMB = 300;
 
   readonly supportedFormatsMeta: SupportedFormat[] = [
     {

@@ -20,7 +20,7 @@ export class PdfToImageConverter implements ConversionEngine {
   readonly supportedInputMimeTypes = ['application/pdf'];
   readonly supportedInputExtensions = ['pdf'];
   readonly supportedOutputFormats: OutputFormat[] = ['jpg', 'png'];
-  readonly maxFileSizeMB = 50;
+  readonly maxFileSizeMB = 300;
 
   readonly supportedFormatsMeta: SupportedFormat[] = [
     {

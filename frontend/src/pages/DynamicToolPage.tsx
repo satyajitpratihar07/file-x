@@ -1,8 +1,11 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { CheckCircle2, ArrowRight, Zap } from 'lucide-react';
+import { CheckCircle2, ArrowRight, RefreshCw } from 'lucide-react';
 import { CONVERTER_TOOLS } from '../config/convertersCatalog';
-import { ConvertPage } from './ConvertPage';
+import { SpecificToolUploader } from '../components/upload/SpecificToolUploader';
+import { PhotoPrintPage } from './PhotoPrintPage';
+import { FileAnalyzerPage } from './FileAnalyzerPage';
+import { LatexStudioPage } from './LatexStudioPage';
 import { RecentConversions } from '../components/common/RecentConversions';
 import '../styles/globals.css';
 import '../styles/components.css';
@@ -10,6 +13,19 @@ import '../styles/components.css';
 export const DynamicToolPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const tool = CONVERTER_TOOLS.find((t) => t.slug === slug);
+
+  // If this route is photo print studio or analyzer, render their dedicated page
+  if (slug === 'photo-print') {
+    return <PhotoPrintPage />;
+  }
+
+  if (slug === 'analyzer' || slug === 'file-analyzer') {
+    return <FileAnalyzerPage />;
+  }
+
+  if (slug === 'latex' || slug === 'latex-to-pdf' || slug === 'latex-studio' || slug === 'tex-to-pdf') {
+    return <LatexStudioPage />;
+  }
 
   if (!tool) {
     return (
@@ -31,25 +47,23 @@ export const DynamicToolPage: React.FC = () => {
 
   return (
     <div className="dynamic-tool-view">
-      {/* Tool Hero Header */}
-      <div className="converters-hero" style={{ paddingTop: '2rem' }}>
-        <div className="converters-badge">
-          <Zap size={14} />
-          <span>{tool.categoryLabel} Dedicated Pipeline</span>
-        </div>
-        <h1 className="converters-title">
-          {tool.title}
-        </h1>
-        <p className="converters-subtitle">
-          {tool.shortDescription}
-        </p>
+      {/* ─── Dedicated Tool-Specific Upload Section ─── */}
+      <SpecificToolUploader tool={tool} />
+
+      {/* ─── Quick Universal Converter Switch ─── */}
+      <div className="text-center mt-6 mb-8">
+        <Link
+          to="/convert"
+          className="btn btn-ghost btn-sm"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+        >
+          <RefreshCw size={14} />
+          <span>Need to convert multiple mixed formats? Use Universal Converter</span>
+        </Link>
       </div>
 
-      {/* Main Converter Flow */}
-      <ConvertPage />
-
       {/* Recent Conversions History */}
-      <div className="container" style={{ maxWidth: '840px', margin: '0 auto' }}>
+      <div className="container" style={{ maxWidth: '860px', margin: '0 auto' }}>
         <RecentConversions />
       </div>
 

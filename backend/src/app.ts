@@ -13,6 +13,7 @@ import downloadRouter from './api/routes/download';
 import formatsRouter from './api/routes/formats';
 import healthRouter from './api/routes/health';
 import analyzerRouter from './api/routes/analyzer';
+import latexRouter from './api/routes/latex';
 import { errorHandler, notFoundHandler, requestIdMiddleware } from './api/middleware/errorHandler';
 
 const app = express();
@@ -88,6 +89,7 @@ app.use('/api/jobs', jobsRouter);
 app.use('/api/download', downloadRouter);
 app.use('/api/formats', formatsRouter);
 app.use('/api/analyze', analyzerRouter);
+app.use('/api/latex', latexRouter);
 app.use('/health', healthRouter);
 app.use('/ready', healthRouter);
 

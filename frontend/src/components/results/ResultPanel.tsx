@@ -78,38 +78,61 @@ export function ResultPanel() {
         {currentJob.files.map((file) => (
           <div
             key={file.fileId}
-            className={`result-file-row ${file.status === 'completed' ? 'success' : 'error'}`}
+            className={`result-file-card ${file.status === 'completed' ? 'success' : 'error'} animate-fadeIn`}
           >
-            <div className="result-file-info">
-              <span className="result-file-name">{file.originalName}</span>
-              {file.status === 'completed' ? (
-                <span className="text-xs text-muted">
-                  {file.outputName}
-                  {file.outputSizeBytes ? ` · ${formatBytes(file.outputSizeBytes)}` : ''}
-                  {file.pageCount && file.pageCount > 1 ? ` · ${file.pageCount} pages` : ''}
-                  {file.conversionTimeMs ? ` · ${formatDuration(file.conversionTimeMs)}` : ''}
-                </span>
-              ) : (
-                <span className="text-xs text-error">{file.errorMessage}</span>
-              )}
+            <div className="result-file-top">
+              <div className="result-file-info">
+                <div className="result-file-title-row">
+                  <span className="result-file-name">{file.originalName}</span>
+                  {file.status === 'completed' && (
+                    <span className="result-badge-success">Ready</span>
+                  )}
+                </div>
+                {file.status === 'completed' ? (
+                  <span className="result-file-meta">
+                    <span className="result-meta-tag">{file.outputName}</span>
+                    {file.outputSizeBytes ? <span>· {formatBytes(file.outputSizeBytes)}</span> : null}
+                    {file.pageCount && file.pageCount > 1 ? <span>· {file.pageCount} pages</span> : null}
+                    {file.conversionTimeMs ? <span>· {formatDuration(file.conversionTimeMs)}</span> : null}
+                  </span>
+                ) : (
+                  <span className="text-xs text-error">{file.errorMessage}</span>
+                )}
+              </div>
             </div>
+
+            {/* ─── Compact Centered Animated Download Button ─── */}
             {file.status === 'completed' && (
-              <a
-                href={apiService.getFileDownloadUrl(currentJob.jobId, file.fileId)}
-                download={file.outputName}
-                className="btn btn-ghost btn-sm"
-                aria-label={`Download ${file.outputName}`}
-              >
-                <Download size={14} />
-                Download
-              </a>
+              <div className="result-download-center-wrapper">
+                <div className="download-btn-aura-container">
+                  {/* Subtle pulsating wave aura */}
+                  <div className="download-aura-pulse"></div>
+
+                  <a
+                    href={apiService.getFileDownloadUrl(currentJob.jobId, file.fileId)}
+                    download={file.outputName}
+                    className="btn-download-compact-animated"
+                    aria-label={`Download ${file.outputName}`}
+                  >
+                    {/* Glossy light streak flare */}
+                    <span className="download-flare-sweep"></span>
+
+                    {/* Animated bouncy download icon */}
+                    <span className="download-icon-bounce-box">
+                      <Download size={18} strokeWidth={2.4} className="download-icon-bounce-energetic" />
+                    </span>
+
+                    <span className="download-main-text">Download</span>
+                  </a>
+                </div>
+              </div>
             )}
           </div>
         ))}
       </div>
 
       <div className="result-expiry-notice">
-        <AlertCircle size={12} />
+        <AlertCircle size={14} />
         <span>Files are automatically deleted from our servers after 60 minutes.</span>
       </div>
     </div>

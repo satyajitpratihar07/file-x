@@ -66,7 +66,7 @@ export class TextToPdfConverter implements ConversionEngine {
 
   readonly supportedOutputFormats: OutputFormat[] = ['pdf', 'jpg', 'png'];
 
-  readonly maxFileSizeMB = 10;
+  readonly maxFileSizeMB = 300;
 
   readonly supportedFormatsMeta: SupportedFormat[] = [
     { extension: 'txt', mimeType: 'text/plain', label: 'Plain Text', category: 'text_code', outputFormats: ['pdf', 'jpg', 'png'] },

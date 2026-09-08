@@ -13,7 +13,7 @@ export class MarkdownAndDocxConverter implements ConversionEngine {
   readonly supportedInputMimeTypes = ['text/markdown', 'text/x-markdown', 'text/plain'];
   readonly supportedInputExtensions = ['md', 'markdown', 'txt'];
   readonly supportedOutputFormats: OutputFormat[] = ['docx', 'txt'];
-  readonly maxFileSizeMB = 30;
+  readonly maxFileSizeMB = 300;
 
   readonly supportedFormatsMeta: SupportedFormat[] = [
     {

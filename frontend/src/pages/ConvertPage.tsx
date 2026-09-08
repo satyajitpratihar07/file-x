@@ -7,7 +7,7 @@ import { useConversionStore } from '../store/conversionStore';
 import { formatBytes } from '../utils/fileUtils';
 import { RecentConversions } from '../components/common/RecentConversions';
 
-export function ConvertPage() {
+export function ConvertPage({ hideHeader = false }: { hideHeader?: boolean } = {}) {
   const {
     selectedFiles,
     removeSelectedFile,
@@ -26,10 +26,12 @@ export function ConvertPage() {
 
   return (
     <main className="convert-page">
-      <div className="convert-page-header">
-        <h1>Universal File Converter</h1>
-        <p>Convert documents, images, spreadsheets, presentations, code files, and more to PDF, JPG, or PNG.</p>
-      </div>
+      {!hideHeader && (
+        <div className="convert-page-header">
+          <h1>Universal File Converter</h1>
+          <p>Convert documents, images, spreadsheets, presentations, code files, and more to PDF, JPG, or PNG.</p>
+        </div>
+      )}
 
       <div className="converter-container">
         {/* Upload Zone — always shown unless results are displaying */}

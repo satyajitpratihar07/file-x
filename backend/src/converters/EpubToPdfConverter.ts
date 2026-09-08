@@ -13,7 +13,7 @@ export class EpubToPdfConverter implements ConversionEngine {
   readonly supportedInputMimeTypes = ['application/epub+zip', 'application/zip'];
   readonly supportedInputExtensions = ['epub'];
   readonly supportedOutputFormats: OutputFormat[] = ['pdf', 'txt'];
-  readonly maxFileSizeMB = 50;
+  readonly maxFileSizeMB = 300;
 
   readonly supportedFormatsMeta: SupportedFormat[] = [
     {

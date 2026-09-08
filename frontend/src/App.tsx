@@ -16,17 +16,23 @@ import { AllConvertersPage } from './pages/AllConvertersPage';
 import { FileAnalyzerPage } from './pages/FileAnalyzerPage';
 import { DynamicToolPage } from './pages/DynamicToolPage';
 import { PhotoPrintPage } from './pages/PhotoPrintPage';
+import { LatexStudioPage } from './pages/LatexStudioPage';
+import { ScrollToTop } from './components/common/ScrollToTop';
 import './styles/globals.css';
 import './styles/components.css';
 
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Header />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/convert" element={<ConvertPage />} />
         <Route path="/convert/:slug" element={<DynamicToolPage />} />
+        <Route path="/latex" element={<LatexStudioPage />} />
+        <Route path="/latex-studio" element={<LatexStudioPage />} />
+        <Route path="/code-pdf" element={<LatexStudioPage />} />
         <Route path="/photo-print" element={<PhotoPrintPage />} />
         <Route path="/converters" element={<AllConvertersPage />} />
         <Route path="/analyzer" element={<FileAnalyzerPage />} />

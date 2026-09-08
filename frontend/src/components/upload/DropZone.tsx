@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, FileUp } from 'lucide-react';
 import { useConversionStore } from '../../store/conversionStore';
 
-const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_SIZE = 300 * 1024 * 1024; // 300MB
 const MAX_FILES = 50; // Support 50 files at a time
 
 interface DropZoneProps {
@@ -103,7 +103,7 @@ export function DropZone({ compact = false }: DropZoneProps) {
       rejectedFiles.forEach((f) => {
         const error = f.errors[0];
         if (error?.code === 'file-too-large') {
-          addToast({ type: 'error', message: `${f.file.name}: File too large (max 50MB)` });
+          addToast({ type: 'error', message: `${f.file.name}: File too large (max 300MB)` });
         } else if (error?.code === 'too-many-files') {
           addToast({ type: 'warning', message: `Maximum ${MAX_FILES} files per batch` });
         } else {
@@ -174,7 +174,7 @@ export function DropZone({ compact = false }: DropZoneProps) {
           {!compact && (
             <div className="dropzone-meta">
               <span className="text-xs text-muted">
-                Up to {MAX_FILES} files at once · Max 50MB each
+                Up to {MAX_FILES} files at once · Max 300MB each
               </span>
             </div>
           )}

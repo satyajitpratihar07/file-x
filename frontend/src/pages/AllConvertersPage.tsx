@@ -144,6 +144,7 @@ const ConverterCard: React.FC<{ tool: ConverterTool }> = ({ tool }) => {
   const isAnalyzer = tool.id === 'file-analyzer';
   const isUniversal = tool.id === 'universal-converter';
   const isPhotoPrint = tool.id === 'photo-print-studio';
+  const isLatex = tool.id === 'latex-to-pdf';
 
   const linkPath = isAnalyzer
     ? '/analyzer'
@@ -151,7 +152,17 @@ const ConverterCard: React.FC<{ tool: ConverterTool }> = ({ tool }) => {
     ? '/convert'
     : isPhotoPrint
     ? '/photo-print'
+    : isLatex
+    ? '/latex'
     : `/convert/${tool.slug}`;
+
+  const buttonLabel = isAnalyzer
+    ? 'Inspect File'
+    : isPhotoPrint
+    ? 'Open Photo Studio'
+    : isLatex
+    ? 'Open LaTeX Studio'
+    : 'Open Converter';
 
   return (
     <div className="catalog-card">
@@ -213,7 +224,7 @@ const ConverterCard: React.FC<{ tool: ConverterTool }> = ({ tool }) => {
       {/* Action Button */}
       {tool.status === 'supported' ? (
         <Link to={linkPath} className="catalog-btn catalog-btn-primary">
-          <span>{isAnalyzer ? 'Inspect File' : isPhotoPrint ? 'Open Studio' : 'Open Converter'}</span>
+          <span>{buttonLabel}</span>
           <ArrowRight size={15} />
         </Link>
       ) : (

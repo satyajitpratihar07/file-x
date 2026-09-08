@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Zap, Shield, Clock, Globe, FileText, Image, Code2,
   FileSpreadsheet, ChevronDown, ChevronUp, ArrowRight,
-  Lock, Download, CheckCircle2, Cpu, Sparkles, Binary, Database, Printer
+  Lock, Download, CheckCircle2, Cpu
 } from 'lucide-react';
 import { DropZone } from '../components/upload/DropZone';
 import { FormatSelector } from '../components/conversion/FormatSelector';
@@ -53,7 +53,7 @@ const FORMAT_CATEGORIES = [
 ];
 
 const STEPS = [
-  { num: '01', title: 'Upload Files', desc: 'Drag & drop or browse. Up to 50 files, 50MB each.' },
+  { num: '01', title: 'Upload Files', desc: 'Drag & drop or browse. Up to 50 files, 300MB each.' },
   { num: '02', title: 'Choose Format', desc: 'Select PDF, JPG, or PNG as your output.' },
   { num: '03', title: 'Convert', desc: 'Click Convert. Our engines process files in parallel.' },
   { num: '04', title: 'Download', desc: 'Download individually or get all files in a ZIP.' },
@@ -70,7 +70,7 @@ const FAQS = [
   },
   {
     q: 'Is there a file size limit?',
-    a: 'Yes — 50MB per file, up to 50 files per batch. These limits ensure fast, reliable processing for everyone.',
+    a: 'Yes — 300MB per file, up to 50 files per batch. These limits ensure fast, reliable processing for everyone.',
   },
   {
     q: 'Do I need to create an account?',
@@ -212,134 +212,6 @@ export function HomePage() {
             <span><Shield size={14} /> Files deleted in 60 min</span>
             <span><Lock size={14} /> Secure upload</span>
             <span><Cpu size={14} /> Real conversion</span>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Recently Added Engines & Features ───────────────────────── */}
-      <section className="section section-dark" aria-labelledby="recently-added-heading">
-        <div className="container">
-          <div className="section-header">
-            <div className="converters-badge" style={{ margin: '0 auto 1rem' }}>
-              <Sparkles size={14} />
-              <span>Newly Released Capabilities</span>
-            </div>
-            <h2 id="recently-added-heading">Recently Added Converters & Tools</h2>
-            <p>Check out the latest enterprise-grade format converters and inspection tools added to ConvertX.</p>
-          </div>
-
-          <div className="format-grid">
-            <div
-              className="format-category-card card"
-              style={{
-                border: '2px solid var(--color-primary)',
-                background: 'linear-gradient(180deg, var(--color-bg-card), var(--color-bg-2))',
-                boxShadow: '0 8px 30px -6px rgba(92, 82, 230, 0.25)',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  background: 'var(--color-primary)',
-                  color: '#fff',
-                  fontSize: '0.625rem',
-                  fontWeight: 800,
-                  padding: '2px 10px',
-                  borderBottomLeftRadius: '8px',
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Featured Studio
-              </div>
-
-              <div className="format-category-icon text-primary" style={{ marginTop: '4px' }}>
-                <Printer size={24} />
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700 }}>Photo Print Studio</h3>
-              </div>
-
-              <p className="text-sm text-muted" style={{ margin: '8px 0 12px' }}>
-                Position photos on realistic white paper (4×6″, A4, Passport sheets). Adjust directly with your mouse (drag, scale, rotate), edit with Photoshop-grade tools, and print at 300 DPI.
-              </p>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
-                <span className="badge" style={{ fontSize: '0.6875rem', background: 'var(--color-bg-2)', border: '1px solid var(--color-border)' }}>
-                  🖱️ Mouse Adjust
-                </span>
-                <span className="badge" style={{ fontSize: '0.6875rem', background: 'var(--color-bg-2)', border: '1px solid var(--color-border)' }}>
-                  ✂️ Passport 8-Pack
-                </span>
-                <span className="badge" style={{ fontSize: '0.6875rem', background: 'var(--color-bg-2)', border: '1px solid var(--color-border)' }}>
-                  🖨️ 300 DPI Print
-                </span>
-                <span className="badge" style={{ fontSize: '0.6875rem', background: 'var(--color-bg-2)', border: '1px solid var(--color-border)' }}>
-                  🎨 Photoshop Tones
-                </span>
-              </div>
-
-              <Link to="/photo-print" className="btn btn-primary btn-sm" style={{ width: 'fit-content' }}>
-                Open Photo Studio →
-              </Link>
-            </div>
-
-            <div className="format-category-card card">
-              <div className="format-category-icon text-accent">
-                <Binary size={22} />
-              </div>
-              <h3>File Inspector</h3>
-              <p className="text-sm text-muted">Inspect raw magic bytes to detect real file types (like PNG disguised as .devtools).</p>
-              <Link to="/analyzer" className="btn btn-ghost btn-sm mt-2" style={{ width: 'fit-content', padding: '4px 8px' }}>
-                Analyze File →
-              </Link>
-            </div>
-
-            <div className="format-category-card card">
-              <div className="format-category-icon text-primary">
-                <Database size={22} />
-              </div>
-              <h3>JSON to PDF</h3>
-              <p className="text-sm text-muted">Format, syntax-wrap, and render JSON datasets directly into clean PDF documents.</p>
-              <Link to="/convert/json-to-pdf" className="btn btn-ghost btn-sm mt-2" style={{ width: 'fit-content', padding: '4px 8px' }}>
-                Convert JSON →
-              </Link>
-            </div>
-
-            <div className="format-category-card card">
-              <div className="format-category-icon text-primary">
-                <Code2 size={22} />
-              </div>
-              <h3>Code to PDF</h3>
-              <p className="text-sm text-muted">Convert Python, JavaScript, TypeScript, and SQL code with monospace pagination.</p>
-              <Link to="/convert/code-to-pdf" className="btn btn-ghost btn-sm mt-2" style={{ width: 'fit-content', padding: '4px 8px' }}>
-                Convert Code →
-              </Link>
-            </div>
-
-            <div className="format-category-card card">
-              <div className="format-category-icon text-accent">
-                <FileText size={22} />
-              </div>
-              <h3>CSV to PDF</h3>
-              <p className="text-sm text-muted">Transform comma-separated data tables into readable, paginated PDF reports.</p>
-              <Link to="/convert/csv-to-pdf" className="btn btn-ghost btn-sm mt-2" style={{ width: 'fit-content', padding: '4px 8px' }}>
-                Convert CSV →
-              </Link>
-            </div>
-          </div>
-
-          <div className="text-center mt-8">
-            <Link to="/converters" className="btn btn-primary">
-              <Sparkles size={16} />
-              <span>Explore All 25+ Converters</span>
-              <ArrowRight size={16} />
-            </Link>
           </div>
         </div>
       </section>

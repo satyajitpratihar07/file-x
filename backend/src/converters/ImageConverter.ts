@@ -33,7 +33,7 @@ export class ImageConverter implements ConversionEngine {
 
   readonly supportedOutputFormats: OutputFormat[] = ['pdf', 'jpg', 'png', 'webp'];
 
-  readonly maxFileSizeMB = 50;
+  readonly maxFileSizeMB = 300;
 
   readonly supportedFormatsMeta: SupportedFormat[] = [
     { extension: 'jpg', mimeType: 'image/jpeg', label: 'JPEG Image', category: 'images', outputFormats: ['pdf', 'jpg', 'png', 'webp'] },

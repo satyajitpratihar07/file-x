@@ -26,7 +26,7 @@ export class DataConverter implements ConversionEngine {
 
   readonly supportedOutputFormats: OutputFormat[] = ['pdf', 'jpg', 'png'];
 
-  readonly maxFileSizeMB = 20;
+  readonly maxFileSizeMB = 300;
 
   readonly supportedFormatsMeta: SupportedFormat[] = [
     { extension: 'json', mimeType: 'application/json', label: 'JSON Data', category: 'data', outputFormats: ['pdf', 'jpg', 'png'] },

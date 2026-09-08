@@ -13,16 +13,16 @@ export class PdfToDocxConverter implements ConversionEngine {
   readonly name = 'PdfToDocxConverter';
   readonly supportedInputMimeTypes = ['application/pdf'];
   readonly supportedInputExtensions = ['pdf'];
-  readonly supportedOutputFormats: OutputFormat[] = ['docx', 'txt'];
-  readonly maxFileSizeMB = 50;
+  readonly supportedOutputFormats: OutputFormat[] = ['pdf', 'docx', 'txt'];
+  readonly maxFileSizeMB = 300;
 
   readonly supportedFormatsMeta: SupportedFormat[] = [
     {
       extension: 'pdf',
       mimeType: 'application/pdf',
-      label: 'PDF Document to Word (DOCX) or Text',
+      label: 'PDF Document to Word (DOCX), Text, or PDF',
       category: 'documents',
-      outputFormats: ['docx', 'txt'],
+      outputFormats: ['pdf', 'docx', 'txt'],
     },
   ];
 
@@ -60,6 +60,23 @@ export class PdfToDocxConverter implements ConversionEngine {
       } catch (parseErr) {
         logger.warn(`pdf-parse error: ${parseErr}`);
         text = dataBuffer.toString('utf-8').replace(/[^\x20-\x7E\n\r]/g, ' ');
+      }
+
+      // If target is PDF (Passthrough/sanitize/optimize)
+      if (outputFormat === 'pdf') {
+        const storageName = generateStorageFileName('pdf');
+        const outputPath = path.join(outputDir, storageName);
+        const outputName = buildOutputDisplayName(file.metadata.originalName, 'pdf');
+        await fs.copyFile(inputPath, outputPath);
+        const stat = await fs.stat(outputPath);
+        return {
+          success: true,
+          outputPath,
+          outputName,
+          sizeBytes: stat.size,
+          pageCount: pageCount || 1,
+          conversionTimeMs: Date.now() - startTime,
+        };
       }
 
       if (outputFormat === 'txt') {
