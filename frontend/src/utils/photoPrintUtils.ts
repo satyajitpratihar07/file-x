@@ -856,7 +856,7 @@ export function triggerDirectPrint(canvas: HTMLCanvasElement) {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Print Photo - ConvertX</title>
+        <title>Print Photo - Any-DoC</title>
         <style>
           @page {
             size: auto;

@@ -31,11 +31,11 @@ export function Header() {
     <header className={`header ${scrolled ? 'header-scrolled' : ''}`} role="banner">
       <div className="container">
         <nav className="header-nav" aria-label="Main navigation">
-          <Link to="/" className="header-logo" aria-label="ConvertX Home">
+          <Link to="/" className="header-logo" aria-label="Any-DoC Home">
             <div className="logo-icon">
-              <img src="/multitask-icon.png" alt="ConvertX Icon" className="logo-multitask-img" />
+              <img src="/multitask-icon.png" alt="Any-DoC Icon" className="logo-multitask-img" />
             </div>
-            <span className="logo-text">ConvertX</span>
+            <span className="logo-text">Any-DoC</span>
           </Link>
 
           <ul className="nav-links hide-mobile" role="list">

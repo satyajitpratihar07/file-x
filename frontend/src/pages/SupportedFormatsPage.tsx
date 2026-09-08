@@ -32,7 +32,7 @@ export function SupportedFormatsPage() {
     <main className="page">
       <div className="page-header">
         <h1>Supported Formats</h1>
-        <p>These are the file formats ConvertX can actually convert — no false claims.</p>
+        <p>These are the file formats Any-DoC can actually convert — no false claims.</p>
       </div>
 
       <div className="container">
@@ -87,7 +87,7 @@ export function SupportedFormatsPage() {
         <div className="formats-note card">
           <h3>Honest Format Support</h3>
           <p>
-            ConvertX only lists formats that are genuinely supported by tested conversion pipelines.
+            Any-DoC only lists formats that are genuinely supported by tested conversion pipelines.
             We use LibreOffice for Office documents (requires Docker/Linux), Sharp for images,
             and PDFKit for text and code files. If a format is listed here, it works.
           </p>

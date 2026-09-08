@@ -47,7 +47,7 @@ export function PrivacyPage() {
           <div className="prose-icon text-primary"><Server size={24} /></div>
           <h2>Infrastructure</h2>
           <p>
-            ConvertX runs on servers within [your region]. All data is processed in-memory or
+            Any-DoC runs on secure, high-performance infrastructure. All data is processed in-memory or
             in temporary local storage. We do not use cloud object storage for temporary conversion files.
             File transmission is secured with HTTPS/TLS.
           </p>
@@ -75,12 +75,12 @@ export function TermsPage() {
     <main className="page">
       <div className="page-header">
         <h1>Terms of Service</h1>
-        <p>By using ConvertX, you agree to these terms.</p>
+        <p>By using Any-DoC, you agree to these terms.</p>
       </div>
       <div className="container-sm prose-page">
         <div className="prose-section card">
           <h2>Acceptable Use</h2>
-          <p>You may use ConvertX to convert files you own or have permission to convert. You may not:</p>
+          <p>You may use Any-DoC to convert files you own or have permission to convert. You may not:</p>
           <ul>
             <li>Upload malicious files, malware, viruses, or exploit code</li>
             <li>Attempt to circumvent security measures or rate limits</li>
@@ -91,7 +91,7 @@ export function TermsPage() {
         </div>
         <div className="prose-section card">
           <h2>Limitations</h2>
-          <p>ConvertX is provided "as is." We do not guarantee 100% uptime or perfect conversion quality for all files. Complex, password-protected, or corrupt files may not convert successfully. We are not responsible for data loss — always keep original copies of your files.</p>
+          <p>Any-DoC is provided "as is." We do not guarantee 100% uptime or perfect conversion quality for all files. Complex, password-protected, or corrupt files may not convert successfully. We are not responsible for data loss — always keep original copies of your files.</p>
         </div>
         <div className="prose-section card">
           <h2>Service Changes</h2>
@@ -117,7 +117,7 @@ export function SecurityPage() {
     <main className="page">
       <div className="page-header">
         <h1>Security</h1>
-        <p>Security is not an afterthought — it's built into every layer of ConvertX.</p>
+        <p>Security is not an afterthought — it's built into every layer of Any-DoC.</p>
       </div>
       <div className="container">
         <div className="security-grid">
@@ -182,7 +182,7 @@ export function HowItWorksPage() {
     <main className="page">
       <div className="page-header">
         <h1>How It Works</h1>
-        <p>A transparent look at ConvertX's conversion process.</p>
+        <p>A transparent look at Any-DoC's conversion process.</p>
       </div>
       <div className="container-sm prose-page">
         <div className="prose-section card">

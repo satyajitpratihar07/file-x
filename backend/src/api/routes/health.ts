@@ -4,7 +4,7 @@ import { jobManager } from '../../jobs/jobManager';
 const router = Router();
 
 router.get('/', (req: Request, res: Response) => {
-  res.json({ status: 'ok', service: 'ConvertX API', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'Any-DoC API', timestamp: new Date().toISOString() });
 });
 
 router.get('/ready', (req: Request, res: Response) => {

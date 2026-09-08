@@ -12,7 +12,7 @@ async function start() {
   startCleanupScheduler();
 
   const server = app.listen(config.port, () => {
-    logger.info(`ConvertX API server running on port ${config.port} (${config.nodeEnv})`);
+    logger.info(`Any-DoC API server running on port ${config.port} (${config.nodeEnv})`);
     logger.info(`Frontend URL: ${config.frontendUrl}`);
     logger.info(`Max file size: ${config.maxFileSizeMB}MB`);
     logger.info(`Job expiry: ${config.jobExpiryMinutes} minutes`);

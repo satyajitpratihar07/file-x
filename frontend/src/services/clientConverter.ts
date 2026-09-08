@@ -1,7 +1,7 @@
 import type { ConversionFileState, JobState, OutputFormat } from '../types';
 
 /**
- * Client-Side In-Browser Conversion Engine for ConvertX.
+ * Client-Side In-Browser Conversion Engine for Any-DoC.
  * Automatically runs when deployed on static/serverless hosts (like Vercel)
  * without requiring a separate backend server.
  */

@@ -202,7 +202,7 @@ export const FileAnalyzerPage: React.FC = () => {
               style={{ width: '100%', justifyContent: 'center' }}
             >
               <Zap size={18} fill="currentColor" />
-              <span>Convert this file now with ConvertX</span>
+              <span>Convert this file now with Any-DoC</span>
               <ArrowRight size={18} />
             </button>
           </div>

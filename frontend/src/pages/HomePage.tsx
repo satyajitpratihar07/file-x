@@ -66,7 +66,7 @@ const FAQS = [
   },
   {
     q: 'Do I need to create an account?',
-    a: 'No. ConvertX works without registration. Just upload and convert.',
+    a: 'No. Any-DoC works without registration. Just upload and convert.',
   },
   {
     q: 'How secure is my data?',
@@ -250,7 +250,7 @@ export function HomePage() {
       <section className="section section-dark" aria-labelledby="features-heading">
         <div className="container">
           <div className="section-header">
-            <h2 id="features-heading">Why ConvertX?</h2>
+            <h2 id="features-heading">Why Any-DoC?</h2>
             <p>Built with quality, security, and usability as top priorities.</p>
           </div>
           <div className="features-grid">
