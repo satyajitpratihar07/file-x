@@ -1,9 +1,17 @@
+import { useRef, useEffect } from 'react';
 import { CheckCircle2, AlertCircle, Download, Trash2, RefreshCw } from 'lucide-react';
 import { useConversionStore } from '../../store/conversionStore';
 import { apiService } from '../../services/api';
 
 export function ResultPanel() {
   const { currentJob, deleteCurrentJob, reset } = useConversionStore();
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (panelRef.current) {
+      panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, []);
 
   if (!currentJob) return null;
 
@@ -12,7 +20,7 @@ export function ResultPanel() {
   const hasResults = completed.length > 0;
 
   return (
-    <div className="result-panel animate-fadeIn">
+    <div ref={panelRef} className="result-panel animate-fadeIn">
       <div className="result-panel-header">
         <div className="result-summary">
           {failed.length === 0 ? (

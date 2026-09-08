@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import {
   FileUp,
@@ -90,6 +90,7 @@ interface SpecificToolUploaderProps {
 }
 
 export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const {
     selectedFiles,
     removeSelectedFile,
@@ -125,8 +126,13 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
 
   const hasFiles = selectedFiles.length > 0;
   const isActive = isUploading || isConverting;
-  const showQueue = hasFiles && !currentJob;
+  const showQueue = hasFiles && !currentJob && !isConverting;
   const showResults = !!currentJob && !isConverting;
+
+  const handleConvert = async () => {
+    containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    await uploadAndConvert();
+  };
 
   const acceptMap = buildAcceptMap(tool.inputFormats);
 
@@ -189,7 +195,7 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
   };
 
   return (
-    <div className="specific-tool-uploader">
+    <div ref={containerRef} className="specific-tool-uploader">
       {/* ─── Specific Tool Header Banner ─── */}
       <div className="tool-upload-hero card animate-fadeIn">
         <div className="tool-upload-badge">
@@ -453,7 +459,7 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
             ) : (
               <button
                 className="btn btn-accent btn-lg convert-btn"
-                onClick={uploadAndConvert}
+                onClick={handleConvert}
                 disabled={isActive || !hasFiles}
               >
                 <Zap size={18} fill="currentColor" />
@@ -465,7 +471,7 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
       )}
 
       {/* ─── Active Conversion Progress ─── */}
-      {isConverting && currentJob && (
+      {isConverting && (
         <section className="active-conversion animate-fadeInUp" aria-label="Conversion progress">
           <div className="active-conversion-header">
             <div className="active-conversion-spinner">
@@ -474,16 +480,35 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
             <div>
               <h2>Processing {tool.title}...</h2>
               <p className="text-sm text-muted">
-                {currentJob.files.filter((f) => f.status === 'completed').length} of{' '}
-                {currentJob.files.length} complete
+                {currentJob
+                  ? `${currentJob.files.filter((f) => f.status === 'completed').length} of ${currentJob.files.length} complete`
+                  : 'Converting files securely...'}
               </p>
             </div>
           </div>
 
           <div className="queue-list">
-            {currentJob.files.map((file) => (
-              <FileCard key={file.fileId} file={file} jobId={currentJob.jobId} />
-            ))}
+            {currentJob ? (
+              currentJob.files.map((file) => (
+                <FileCard key={file.fileId} file={file} jobId={currentJob.jobId} />
+              ))
+            ) : (
+              selectedFiles.map((file, i) => (
+                <FileCard
+                  key={`conv-${file.name}-${i}`}
+                  file={{
+                    fileId: `local-${i}`,
+                    originalName: file.name,
+                    status: 'processing',
+                    progress: uploadProgress || 50,
+                    outputFormat: outputFormat,
+                    detectedMimeType: file.type || 'application/octet-stream',
+                    sizeBytes: file.size,
+                    extension: file.name.split('.').pop() || '',
+                  }}
+                />
+              ))
+            )}
           </div>
         </section>
       )}

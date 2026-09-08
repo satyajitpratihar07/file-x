@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Zap, Shield, Clock, Globe, FileText, Image, Code2,
@@ -104,6 +104,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 }
 
 export function HomePage() {
+  const converterRef = useRef<HTMLDivElement>(null);
   const {
     selectedFiles,
     removeSelectedFile,
@@ -119,6 +120,11 @@ export function HomePage() {
   const hasFiles = selectedFiles.length > 0;
   const isActive = isUploading || isConverting;
   const showResults = !!currentJob && !isConverting;
+
+  const handleConvertNow = async () => {
+    converterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    await uploadAndConvert();
+  };
 
   return (
     <main>
@@ -141,10 +147,10 @@ export function HomePage() {
           </p>
 
           {/* ─── Inline Converter ─────────────────────────────────────── */}
-          <div className="hero-converter animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+          <div ref={converterRef} className="hero-converter animate-fadeIn" style={{ animationDelay: '0.3s' }}>
             {!showResults && <DropZone />}
 
-            {hasFiles && !currentJob && (
+            {hasFiles && !currentJob && !isConverting && (
               <div className="hero-queue animate-fadeInUp">
                 <div className="queue-header">
                   <h3>{selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''} ready</h3>
@@ -178,7 +184,7 @@ export function HomePage() {
                   ) : (
                     <button
                       className="btn btn-accent btn-xl convert-btn"
-                      onClick={uploadAndConvert}
+                      onClick={handleConvertNow}
                       disabled={isActive}
                     >
                       <Zap size={20} fill="currentColor" />
@@ -189,13 +195,34 @@ export function HomePage() {
               </div>
             )}
 
-            {isConverting && currentJob && (
+            {isConverting && (
               <div className="hero-queue animate-fadeInUp" aria-live="polite">
-                <h3 style={{ marginBottom: '1rem' }}>Converting...</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
+                  <Zap size={18} className="text-accent animate-pulse" />
+                  <h3 style={{ margin: 0 }}>Converting your files...</h3>
+                </div>
                 <div className="queue-list">
-                  {currentJob.files.map((f) => (
-                    <FileCard key={f.fileId} file={f} jobId={currentJob.jobId} />
-                  ))}
+                  {currentJob ? (
+                    currentJob.files.map((f) => (
+                      <FileCard key={f.fileId} file={f} jobId={currentJob.jobId} />
+                    ))
+                  ) : (
+                    selectedFiles.map((file, i) => (
+                      <FileCard
+                        key={`conv-${file.name}-${i}`}
+                        file={{
+                          fileId: `local-${i}`,
+                          originalName: file.name,
+                          status: 'processing',
+                          progress: uploadProgress || 50,
+                          outputFormat,
+                          detectedMimeType: file.type || 'application/octet-stream',
+                          sizeBytes: file.size,
+                          extension: file.name.split('.').pop() || '',
+                        }}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
             )}
