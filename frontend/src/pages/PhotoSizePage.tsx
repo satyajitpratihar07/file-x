@@ -1083,27 +1083,36 @@ export function PhotoSizePage() {
           </p>
 
           {/* Quick Media Switcher Tabs */}
-          <div className="resizer-media-tabs">
+          <div className="resizer-media-tabs" role="tablist">
             <button
               className={`resizer-tab-btn ${activeTab === 'image' ? 'active' : ''}`}
               onClick={() => { setActiveTab('image'); setResults([]); }}
+              role="tab"
+              aria-selected={activeTab === 'image'}
             >
-              <ImageIcon size={18} />
-              <span>Images & Photos</span>
+              <ImageIcon size={17} className="tab-btn-icon" />
+              <span className="tab-label-desktop">Images & Photos</span>
+              <span className="tab-label-mobile">Images</span>
             </button>
             <button
               className={`resizer-tab-btn ${activeTab === 'video' ? 'active' : ''}`}
               onClick={() => { setActiveTab('video'); setResults([]); }}
+              role="tab"
+              aria-selected={activeTab === 'video'}
             >
-              <Video size={18} />
-              <span>Videos & MP4</span>
+              <Video size={17} className="tab-btn-icon" />
+              <span className="tab-label-desktop">Videos & MP4</span>
+              <span className="tab-label-mobile">Videos</span>
             </button>
             <button
               className={`resizer-tab-btn ${activeTab === 'document' ? 'active' : ''}`}
               onClick={() => { setActiveTab('document'); setResults([]); }}
+              role="tab"
+              aria-selected={activeTab === 'document'}
             >
-              <FileText size={18} />
-              <span>PDF & Documents</span>
+              <FileText size={17} className="tab-btn-icon" />
+              <span className="tab-label-desktop">PDF & Documents</span>
+              <span className="tab-label-mobile">PDF & Docs</span>
             </button>
           </div>
         </div>
