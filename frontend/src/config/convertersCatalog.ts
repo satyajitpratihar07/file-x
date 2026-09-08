@@ -41,7 +41,6 @@ export interface ConverterTool {
 
 export const CATEGORY_FILTERS: { id: CatalogCategory; label: string; icon: string }[] = [
   { id: 'all', label: 'All Converters', icon: 'grid' },
-  { id: 'recently_added' as any, label: '✨ Recently Added', icon: 'sparkles' },
   { id: 'popular' as any, label: 'Popular Tools', icon: 'star' },
   { id: 'documents', label: 'Documents', icon: 'file-text' },
   { id: 'pdf_tools', label: 'PDF Tools', icon: 'pdf' },

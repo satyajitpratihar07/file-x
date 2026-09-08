@@ -16,15 +16,13 @@ import '../styles/components.css';
 
 export const AllConvertersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<CatalogCategory | 'recently_added'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<CatalogCategory>('all');
 
   const filteredTools = useMemo(() => {
     return CONVERTER_TOOLS.filter((tool) => {
       const matchesCategory =
         selectedCategory === 'all'
           ? true
-          : selectedCategory === 'recently_added'
-          ? tool.recentlyAdded
           : selectedCategory === ('popular' as any)
           ? tool.popular
           : tool.category === selectedCategory;
@@ -90,8 +88,6 @@ export const AllConvertersPage: React.FC = () => {
             const count =
               cat.id === 'all'
                 ? CONVERTER_TOOLS.length
-                : cat.id === ('recently_added' as any)
-                ? CONVERTER_TOOLS.filter((t) => t.recentlyAdded).length
                 : cat.id === ('popular' as any)
                 ? CONVERTER_TOOLS.filter((t) => t.popular).length
                 : CONVERTER_TOOLS.filter((t) => t.category === cat.id).length;
