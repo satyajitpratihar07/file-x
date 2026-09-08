@@ -9,7 +9,6 @@ const NAV_LINKS = [
   { to: '/photo-print', label: 'Photo Print' },
   { to: '/converters', label: 'All Tools' },
   { to: '/analyzer', label: 'File Inspector' },
-  { to: '/formats', label: 'Formats' },
   { to: '/how-it-works', label: 'How It Works' },
 ];
 
