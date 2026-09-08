@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Zap, Shield, Clock, Globe, ChevronDown, ChevronUp, ArrowRight,
   Lock, Download, CheckCircle2, Cpu, HelpCircle
@@ -107,6 +107,8 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 export function HomePage() {
   const converterRef = useRef<HTMLDivElement>(null);
+  const queueRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const {
     selectedFiles,
     removeSelectedFile,
@@ -122,6 +124,26 @@ export function HomePage() {
   const hasFiles = selectedFiles.length > 0;
   const isActive = isUploading || isConverting;
   const showResults = !!currentJob && !isConverting;
+
+  // Auto-scroll down when conversion finishes
+  useEffect(() => {
+    if (showResults) {
+      const timer = setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [showResults]);
+
+  // Auto-scroll down to queue/options when files are first dropped or selected
+  useEffect(() => {
+    if (hasFiles && !showResults && !isActive) {
+      const timer = setTimeout(() => {
+        queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [hasFiles, showResults, isActive]);
 
   const handleConvertNow = async () => {
     converterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -153,7 +175,7 @@ export function HomePage() {
             {!showResults && <DropZone />}
 
             {hasFiles && !currentJob && !isConverting && (
-              <div className="hero-queue animate-fadeInUp">
+              <div ref={queueRef} className="hero-queue animate-fadeInUp">
                 <div className="queue-header">
                   <h3>{selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''} ready</h3>
                   <button className="btn btn-ghost btn-sm" onClick={clearSelectedFiles}>Clear</button>
@@ -229,7 +251,11 @@ export function HomePage() {
               </div>
             )}
 
-            {showResults && <ResultPanel />}
+            {showResults && (
+              <div ref={resultsRef}>
+                <ResultPanel />
+              </div>
+            )}
 
             {/* Recent Conversions History */}
             {!isActive && <RecentConversions compact />}

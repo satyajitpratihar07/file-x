@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import {
   Image as ImageIcon, Video, FileText, Lock, Unlock,
@@ -186,6 +186,29 @@ export function PhotoSizePage() {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [results, setResults] = useState<ResizedResult[]>([]);
+
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll down when processing completes or results are ready
+  useEffect(() => {
+    if (results.length > 0) {
+      const timer = setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [results.length]);
+
+  // Auto-scroll down to controls when new files are uploaded
+  useEffect(() => {
+    if (files.length > 0 && results.length === 0) {
+      const timer = setTimeout(() => {
+        controlsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [files.length, results.length]);
 
   const activeFile = files[activeFileIndex] || null;
 
@@ -1289,7 +1312,7 @@ export function PhotoSizePage() {
 
         {/* ─── 2. TAB 1: Image Resizer Controls ─── */}
         {activeTab === 'image' && (
-          <div className="resizer-controls-card animate-fadeIn">
+          <div ref={controlsRef} className="resizer-controls-card animate-fadeIn">
             <h2 className="resizer-section-heading">Choose new size and format</h2>
 
             {/* Target Size Set Toggle Card */}
@@ -1836,7 +1859,7 @@ export function PhotoSizePage() {
 
         {/* ─── 3. Results Section ─── */}
         {results.length > 0 && (
-          <div className="resizer-results-card animate-fadeInUp">
+          <div ref={resultsRef} className="resizer-results-card animate-fadeInUp">
             <div className="results-header-row">
               <div className="results-title-group">
                 <Check size={22} className="text-success" />

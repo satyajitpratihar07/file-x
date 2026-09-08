@@ -8,9 +8,12 @@ export function ResultPanel() {
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (panelRef.current) {
-      panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    const timer = setTimeout(() => {
+      if (panelRef.current) {
+        panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 120);
+    return () => clearTimeout(timer);
   }, []);
 
   if (!currentJob) return null;

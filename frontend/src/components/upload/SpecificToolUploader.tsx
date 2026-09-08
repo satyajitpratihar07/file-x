@@ -28,6 +28,8 @@ interface SpecificToolUploaderProps {
 
 export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const queueRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const {
     selectedFiles,
     removeSelectedFile,
@@ -65,6 +67,26 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
   const isActive = isUploading || isConverting;
   const showQueue = hasFiles && !currentJob && !isConverting;
   const showResults = !!currentJob && !isConverting;
+
+  // Auto-scroll down when conversion finishes
+  useEffect(() => {
+    if (showResults) {
+      const timer = setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [showResults]);
+
+  // Auto-scroll down to queue/controls when files are selected
+  useEffect(() => {
+    if (showQueue && !isActive) {
+      const timer = setTimeout(() => {
+        queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [showQueue, isActive]);
 
   const handleConvert = async () => {
     containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -309,7 +331,7 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
 
       {/* ─── File Queue ─── */}
       {showQueue && (
-        <section className="queue-section animate-fadeInUp" aria-label="Files to convert">
+        <section ref={queueRef} className="queue-section animate-fadeInUp" aria-label="Files to convert">
           <div className="queue-header">
             <h2>
               {selectedFiles.length} {tool.inputFormats[0].toUpperCase()} file{selectedFiles.length > 1 ? 's' : ''} ready
@@ -431,7 +453,11 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
       )}
 
       {/* ─── Results Panel ─── */}
-      {showResults && <ResultPanel />}
+      {showResults && (
+        <div ref={resultsRef}>
+          <ResultPanel />
+        </div>
+      )}
     </div>
   );
 }
