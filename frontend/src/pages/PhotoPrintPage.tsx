@@ -111,8 +111,90 @@ export function PhotoPrintPage() {
     img.src = url;
   }, []);
 
-  // One-click demo sample photo loader
-  const loadSamplePhoto = useCallback(() => {
+  // Quick Preset Handlers
+  const applyPreset = useCallback((type: 'passport' | 'photo4x6' | 'framed5x7' | 'a4print' | 'polaroid') => {
+    switch (type) {
+      case 'passport':
+        setState((prev) => ({
+          ...prev,
+          paperSizeId: '4x6',
+          orientation: 'portrait',
+          layoutMode: 'grid',
+          gridCopies: 8,
+          gridGapMm: 4,
+          marginMm: 6,
+          showCuttingGuides: true,
+          showSafeMargin: true,
+          fitMode: 'contain',
+          scale: 1,
+          borderWidthMm: 0.5,
+          borderColor: '#e2e8f0',
+          borderRadiusMm: 0,
+          frameStyle: 'solid',
+        }));
+        break;
+      case 'photo4x6':
+        setState((prev) => ({
+          ...prev,
+          paperSizeId: '4x6',
+          layoutMode: 'single',
+          marginMm: 4,
+          fitMode: 'contain',
+          scale: 1,
+          offsetX: 0,
+          offsetY: 0,
+          showCuttingGuides: false,
+          frameStyle: 'none',
+        }));
+        break;
+      case 'framed5x7':
+        setState((prev) => ({
+          ...prev,
+          paperSizeId: '5x7',
+          layoutMode: 'single',
+          marginMm: 8,
+          fitMode: 'contain',
+          scale: 1,
+          offsetX: 0,
+          offsetY: 0,
+          borderWidthMm: 2,
+          borderColor: '#ffffff',
+          frameStyle: 'solid',
+        }));
+        break;
+      case 'a4print':
+        setState((prev) => ({
+          ...prev,
+          paperSizeId: 'a4',
+          layoutMode: 'single',
+          marginMm: 10,
+          fitMode: 'contain',
+          scale: 1,
+          offsetX: 0,
+          offsetY: 0,
+          showCuttingGuides: false,
+          frameStyle: 'none',
+        }));
+        break;
+      case 'polaroid':
+        setState((prev) => ({
+          ...prev,
+          paperSizeId: '4x6',
+          layoutMode: 'single',
+          marginMm: 6,
+          fitMode: 'contain',
+          scale: 0.85,
+          offsetX: 0,
+          offsetY: -6,
+          frameStyle: 'polaroid',
+          captionText: prev.captionText || 'Printout',
+        }));
+        break;
+    }
+  }, []);
+
+  // One-click demo sample photo loader with optional preset
+  const loadSamplePhoto = useCallback((preset?: 'passport' | 'photo4x6' | 'framed5x7' | 'a4print' | 'polaroid') => {
     const off = document.createElement('canvas');
     off.width = 1200;
     off.height = 1600;
@@ -179,13 +261,17 @@ export function PhotoPrintPage() {
     img.onload = () => {
       setImageElement(img);
       setImageSrc(dataUrl);
-      setState((prev) => ({
-        ...prev,
-        orientation: 'portrait',
-      }));
+      if (preset) {
+        applyPreset(preset);
+      } else {
+        setState((prev) => ({
+          ...prev,
+          orientation: 'portrait',
+        }));
+      }
     };
     img.src = dataUrl;
-  }, []);
+  }, [applyPreset]);
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -315,88 +401,6 @@ export function PhotoPrintPage() {
       ...prev,
       scale: Math.max(0.15, Math.min(3.5, Number((prev.scale + delta).toFixed(2)))),
     }));
-  };
-
-  // Quick Preset Handlers
-  const applyPreset = (type: 'passport' | 'photo4x6' | 'framed5x7' | 'a4print' | 'polaroid') => {
-    switch (type) {
-      case 'passport':
-        setState((prev) => ({
-          ...prev,
-          paperSizeId: '4x6',
-          orientation: 'portrait',
-          layoutMode: 'grid',
-          gridCopies: 8,
-          gridGapMm: 4,
-          marginMm: 6,
-          showCuttingGuides: true,
-          showSafeMargin: true,
-          fitMode: 'contain',
-          scale: 1,
-          borderWidthMm: 0.5,
-          borderColor: '#e2e8f0',
-          borderRadiusMm: 0,
-          frameStyle: 'solid',
-        }));
-        break;
-      case 'photo4x6':
-        setState((prev) => ({
-          ...prev,
-          paperSizeId: '4x6',
-          layoutMode: 'single',
-          marginMm: 4,
-          fitMode: 'contain',
-          scale: 1,
-          offsetX: 0,
-          offsetY: 0,
-          showCuttingGuides: false,
-          frameStyle: 'none',
-        }));
-        break;
-      case 'framed5x7':
-        setState((prev) => ({
-          ...prev,
-          paperSizeId: '5x7',
-          layoutMode: 'single',
-          marginMm: 8,
-          fitMode: 'contain',
-          scale: 1,
-          offsetX: 0,
-          offsetY: 0,
-          borderWidthMm: 2,
-          borderColor: '#ffffff',
-          frameStyle: 'solid',
-        }));
-        break;
-      case 'a4print':
-        setState((prev) => ({
-          ...prev,
-          paperSizeId: 'a4',
-          layoutMode: 'single',
-          marginMm: 10,
-          fitMode: 'contain',
-          scale: 1,
-          offsetX: 0,
-          offsetY: 0,
-          showCuttingGuides: false,
-          frameStyle: 'none',
-        }));
-        break;
-      case 'polaroid':
-        setState((prev) => ({
-          ...prev,
-          paperSizeId: '4x6',
-          layoutMode: 'single',
-          marginMm: 6,
-          fitMode: 'contain',
-          scale: 0.85,
-          offsetX: 0,
-          offsetY: -6,
-          frameStyle: 'polaroid',
-          captionText: prev.captionText || 'Printout',
-        }));
-        break;
-    }
   };
 
   // Direct Print Handler
@@ -555,35 +559,147 @@ export function PhotoPrintPage() {
           onDragOver={(e) => e.preventDefault()}
         >
           {!imageElement ? (
-            <div
-              className="studio-empty-state"
-              onClick={() => fileInputRef.current?.click()}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="studio-upload-icon-circle">
-                <Upload size={32} />
-              </div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px' }}>
-                Upload Photo for Printout
-              </h2>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-3)', marginBottom: '20px' }}>
-                Select or drag any photo (JPG, PNG, WEBP). Below it will appear on a realistic white
-                sheet of paper ready to adjust, edit with Photoshop tools, and print!
-              </p>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                <button className="btn btn-primary" onClick={() => fileInputRef.current?.click()}>
-                  <Upload size={16} /> Choose Photo
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    loadSamplePhoto();
-                  }}
-                  title="Try sample portrait to test studio tools instantly"
-                >
-                  <Sparkles size={16} /> Try Sample Photo
-                </button>
+            <div className="studio-empty-hero-container animate-fadeIn">
+              <div
+                className="studio-empty-state"
+                onClick={() => fileInputRef.current?.click()}
+                style={{ cursor: 'pointer' }}
+              >
+                {/* Glowing Top Badge */}
+                <div className="studio-hero-pill">
+                  <Sparkles size={13} className="studio-sparkle-icon" />
+                  <span>300 DPI High-Precision Photo Studio</span>
+                </div>
+
+                {/* Animated Floating Icon */}
+                <div className="studio-upload-icon-wrapper">
+                  <div className="studio-upload-icon-glow" />
+                  <div className="studio-upload-icon-circle">
+                    <Printer size={34} className="studio-printer-svg" />
+                    <span className="studio-mini-upload-badge">
+                      <Upload size={13} />
+                    </span>
+                  </div>
+                </div>
+
+                {/* Title & Description */}
+                <h2 className="studio-empty-title">
+                  Upload Photo for <span className="gradient-text">Printout & Studio</span>
+                </h2>
+                <p className="studio-empty-desc">
+                  Select or drag any photo (JPG, PNG, WEBP). Below it will appear on a realistic white
+                  sheet of paper ready to adjust, edit with Photoshop tools, and print!
+                </p>
+
+                {/* Primary Action Buttons */}
+                <div className="studio-empty-actions" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-lg studio-choose-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload size={18} />
+                    <span>Choose Photo</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-lg studio-sample-btn"
+                    onClick={() => loadSamplePhoto()}
+                    title="Try sample portrait to test studio tools instantly"
+                  >
+                    <Sparkles size={18} />
+                    <span>Try Sample Photo</span>
+                  </button>
+                </div>
+
+                {/* Quick Starter Presets Section */}
+                <div className="studio-presets-intro" onClick={(e) => e.stopPropagation()}>
+                  <span className="studio-presets-intro-label">Or 1-Click Launch with Layout Preset:</span>
+                  <div className="studio-starter-grid">
+                    <button
+                      type="button"
+                      className="studio-starter-card"
+                      onClick={() => loadSamplePhoto('passport')}
+                      title="Load sample photo with 8 Passport Photos on 4x6 sheet"
+                    >
+                      <div className="starter-card-icon-box passport-box">
+                        <Scissors size={17} />
+                      </div>
+                      <div className="starter-card-content">
+                        <div className="starter-card-title">Passport 8-Pack</div>
+                        <div className="starter-card-sub">4×6″ Sheet with Cut Lines</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="studio-starter-card"
+                      onClick={() => loadSamplePhoto('photo4x6')}
+                      title="Load standard 4x6 photo print layout"
+                    >
+                      <div className="starter-card-icon-box photo-box">
+                        <ImageIcon size={17} />
+                      </div>
+                      <div className="starter-card-content">
+                        <div className="starter-card-title">4 × 6″ Photo</div>
+                        <div className="starter-card-sub">Standard Lab Quality</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="studio-starter-card"
+                      onClick={() => loadSamplePhoto('framed5x7')}
+                      title="Load 5x7 frame portrait layout"
+                    >
+                      <div className="starter-card-icon-box frame-box">
+                        <Layers size={17} />
+                      </div>
+                      <div className="starter-card-content">
+                        <div className="starter-card-title">5 × 7″ Framed</div>
+                        <div className="starter-card-sub">Desk & Wall Frame</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="studio-starter-card"
+                      onClick={() => loadSamplePhoto('a4print')}
+                      title="Load full A4 page printout layout"
+                    >
+                      <div className="starter-card-icon-box a4-box">
+                        <FileText size={17} />
+                      </div>
+                      <div className="starter-card-content">
+                        <div className="starter-card-title">Full A4 Sheet</div>
+                        <div className="starter-card-sub">Edge-to-Edge Doc</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="studio-starter-card"
+                      onClick={() => loadSamplePhoto('polaroid')}
+                      title="Load vintage Polaroid frame with custom caption"
+                    >
+                      <div className="starter-card-icon-box polaroid-box">
+                        <Type size={17} />
+                      </div>
+                      <div className="starter-card-content">
+                        <div className="starter-card-title">Vintage Polaroid</div>
+                        <div className="starter-card-sub">Classic White Chin</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Studio Feature Chips */}
+                <div className="studio-trust-chips" onClick={(e) => e.stopPropagation()}>
+                  <span className="studio-trust-chip">🎯 300 DPI Lab Precision</span>
+                  <span className="studio-trust-chip">🎨 Photoshop Color Curves</span>
+                  <span className="studio-trust-chip">📄 Vector PDF & JPG Export</span>
+                  <span className="studio-trust-chip">🔒 100% Client-Side Privacy</span>
+                </div>
               </div>
             </div>
           ) : (

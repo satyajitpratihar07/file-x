@@ -17,6 +17,7 @@ import { FileAnalyzerPage } from './pages/FileAnalyzerPage';
 import { DynamicToolPage } from './pages/DynamicToolPage';
 import { PhotoPrintPage } from './pages/PhotoPrintPage';
 import { LatexStudioPage } from './pages/LatexStudioPage';
+import { PhotoSizePage } from './pages/PhotoSizePage';
 import { ScrollToTop } from './components/common/ScrollToTop';
 import './styles/globals.css';
 import './styles/components.css';
@@ -28,6 +29,9 @@ function App() {
       <Header />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/photo-size" element={<PhotoSizePage />} />
+        <Route path="/resize" element={<PhotoSizePage />} />
+        <Route path="/photo-resize" element={<PhotoSizePage />} />
         <Route path="/convert" element={<ConvertPage />} />
         <Route path="/convert/:slug" element={<DynamicToolPage />} />
         <Route path="/latex" element={<LatexStudioPage />} />

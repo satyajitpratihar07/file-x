@@ -1,9 +1,7 @@
 import { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import {
-  Zap, Shield, Clock, Globe, FileText, Image, Code2,
-  FileSpreadsheet, ChevronDown, ChevronUp, ArrowRight,
-  Lock, Download, CheckCircle2, Cpu
+  Zap, Shield, Clock, Globe, ChevronDown, ChevronUp, ArrowRight,
+  Lock, Download, CheckCircle2, Cpu, HelpCircle
 } from 'lucide-react';
 import { DropZone } from '../components/upload/DropZone';
 import { FormatSelector } from '../components/conversion/FormatSelector';
@@ -45,12 +43,6 @@ const FEATURES = [
   },
 ];
 
-const FORMAT_CATEGORIES = [
-  { icon: <FileText size={20} />, label: 'Documents', formats: 'DOCX, DOC, ODT, RTF, PDF' },
-  { icon: <FileSpreadsheet size={20} />, label: 'Spreadsheets', formats: 'XLSX, XLS, ODS, CSV' },
-  { icon: <Image size={20} />, label: 'Images', formats: 'JPG, PNG, WEBP, SVG, TIFF, GIF' },
-  { icon: <Code2 size={20} />, label: 'Code & Text', formats: 'PY, JS, TS, JSON, MD, YAML, SQL' },
-];
 
 const STEPS = [
   { num: '01', title: 'Upload Files', desc: 'Drag & drop or browse. Up to 50 files, 300MB each.' },
@@ -89,16 +81,26 @@ const FAQS = [
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="faq-item">
+    <div
+      className={`faq-item ${open ? 'faq-item-open' : ''}`}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       <button
         className="faq-question"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
-        <span>{q}</span>
-        {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        <span className="faq-q-text">{q}</span>
+        <div className="faq-chevron-circle">
+          {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </div>
       </button>
-      {open && <div className="faq-answer"><p>{a}</p></div>}
+      <div className={`faq-answer-wrapper ${open ? 'expanded' : ''}`}>
+        <div className="faq-answer">
+          <p>{a}</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -243,29 +245,6 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ─── Format Overview ─────────────────────────────────────────── */}
-      <section className="section" aria-labelledby="formats-heading">
-        <div className="container">
-          <div className="section-header">
-            <h2 id="formats-heading">Broad Format Support</h2>
-            <p>Works with the formats you actually use — and more.</p>
-          </div>
-          <div className="format-grid">
-            {FORMAT_CATEGORIES.map((cat) => (
-              <div key={cat.label} className="format-category-card card">
-                <div className="format-category-icon text-primary">{cat.icon}</div>
-                <h3>{cat.label}</h3>
-                <p className="text-sm text-muted">{cat.formats}</p>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-8">
-            <Link to="/formats" className="btn btn-ghost">
-              View All Supported Formats <ArrowRight size={16} />
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* ─── Features ────────────────────────────────────────────────── */}
       <section className="section section-dark" aria-labelledby="features-heading">
@@ -307,10 +286,19 @@ export function HomePage() {
       </section>
 
       {/* ─── FAQ ─────────────────────────────────────────────────────── */}
-      <section className="section section-dark" id="faq" aria-labelledby="faq-heading">
+      <section className="section faq-enhanced-section" id="faq" aria-labelledby="faq-heading">
         <div className="container-sm">
-          <div className="section-header">
-            <h2 id="faq-heading">Frequently Asked Questions</h2>
+          <div className="section-header text-center">
+            <div className="faq-badge animate-fadeIn">
+              <HelpCircle size={15} className="faq-badge-icon" />
+              <span>Got Questions?</span>
+            </div>
+            <h2 id="faq-heading" className="faq-main-title">
+              Frequently Asked <span className="gradient-text">Questions</span>
+            </h2>
+            <p className="faq-main-subtitle">
+              Everything you need to know about our conversion speeds, privacy, file safety, and format limits.
+            </p>
           </div>
           <div className="faq-list">
             {FAQS.map((faq) => (
@@ -320,22 +308,6 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ─── CTA ─────────────────────────────────────────────────────── */}
-      <section className="section cta-section" aria-label="Call to action">
-        <div className="container text-center">
-          <h2>Ready to convert your files?</h2>
-          <p className="mt-4">Free. Secure. No sign-up required.</p>
-          <div className="cta-buttons mt-8">
-            <Link to="/convert" className="btn btn-accent btn-xl">
-              <Zap size={20} fill="currentColor" />
-              Start Converting Now
-            </Link>
-            <Link to="/formats" className="btn btn-ghost btn-lg">
-              View Supported Formats
-            </Link>
-          </div>
-        </div>
-      </section>
     </main>
   );
 }

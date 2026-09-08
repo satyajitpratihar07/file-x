@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Search,
@@ -6,7 +6,25 @@ import {
   ArrowRight,
   CheckCircle2,
   AlertCircle,
-  X
+  X,
+  LayoutGrid,
+  Star,
+  FileText,
+  FileDown,
+  Image,
+  Layers,
+  Camera,
+  Table,
+  Presentation,
+  Code,
+  Database,
+  Globe,
+  BookOpen,
+  Archive,
+  PenTool,
+  Zap,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { CONVERTER_TOOLS, CATEGORY_FILTERS } from '../config/convertersCatalog';
 import type { CatalogCategory, ConverterTool } from '../config/convertersCatalog';
@@ -14,9 +32,39 @@ import { RecentConversions } from '../components/common/RecentConversions';
 import '../styles/globals.css';
 import '../styles/components.css';
 
+const getCategoryIcon = (iconName: string) => {
+  switch (iconName) {
+    case 'grid': return <LayoutGrid size={15} />;
+    case 'star': return <Star size={15} />;
+    case 'file-text': return <FileText size={15} />;
+    case 'pdf': return <FileDown size={15} />;
+    case 'image': return <Image size={15} />;
+    case 'images': return <Layers size={15} />;
+    case 'camera': return <Camera size={15} />;
+    case 'table': return <Table size={15} />;
+    case 'presentation': return <Presentation size={15} />;
+    case 'code': return <Code size={15} />;
+    case 'database': return <Database size={15} />;
+    case 'globe': return <Globe size={15} />;
+    case 'book': return <BookOpen size={15} />;
+    case 'archive': return <Archive size={15} />;
+    case 'pen-tool': return <PenTool size={15} />;
+    case 'zap': return <Zap size={15} />;
+    default: return <LayoutGrid size={15} />;
+  }
+};
+
 export const AllConvertersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CatalogCategory>('all');
+  const tabsRef = useRef<HTMLDivElement>(null);
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (tabsRef.current) {
+      const scrollAmount = direction === 'left' ? -280 : 280;
+      tabsRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   const filteredTools = useMemo(() => {
     return CONVERTER_TOOLS.filter((tool) => {
@@ -62,7 +110,7 @@ export const AllConvertersPage: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search 25+ tools (e.g. PNG to JPG, PDF, DOCX, JSON)..."
+              placeholder="Search 25+ tools by name, input, or output format (e.g. PDF, JPG, DOCX, CSV)..."
               className="catalog-search-input"
             />
             {searchQuery && (
@@ -81,30 +129,53 @@ export const AllConvertersPage: React.FC = () => {
       {/* Recent Conversions History */}
       <RecentConversions />
 
-      {/* Category Pills Navigation */}
-      <div className="catalog-tabs-container">
-        <div className="catalog-tabs">
-          {CATEGORY_FILTERS.map((cat) => {
-            const count =
-              cat.id === 'all'
-                ? CONVERTER_TOOLS.length
-                : cat.id === ('popular' as any)
-                ? CONVERTER_TOOLS.filter((t) => t.popular).length
-                : CONVERTER_TOOLS.filter((t) => t.category === cat.id).length;
+      {/* Category Pills Navigation with Scroll Buttons */}
+      <div className="catalog-tabs-wrapper">
+        <button
+          type="button"
+          className="tabs-nav-btn left"
+          onClick={() => scrollTabs('left')}
+          title="Scroll categories left"
+          aria-label="Scroll left"
+        >
+          <ChevronLeft size={16} />
+        </button>
 
-            const isSelected = selectedCategory === (cat.id as any);
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id as any)}
-                className={`catalog-tab ${isSelected ? 'catalog-tab-active' : ''}`}
-              >
-                <span>{cat.label}</span>
-                <span className="catalog-tab-count">{count}</span>
-              </button>
-            );
-          })}
+        <div className="catalog-tabs-container" ref={tabsRef}>
+          <div className="catalog-tabs">
+            {CATEGORY_FILTERS.map((cat) => {
+              const count =
+                cat.id === 'all'
+                  ? CONVERTER_TOOLS.length
+                  : cat.id === ('popular' as any)
+                  ? CONVERTER_TOOLS.filter((t) => t.popular).length
+                  : CONVERTER_TOOLS.filter((t) => t.category === cat.id).length;
+
+              const isSelected = selectedCategory === (cat.id as any);
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id as any)}
+                  className={`catalog-tab ${isSelected ? 'catalog-tab-active' : ''}`}
+                >
+                  <span className="catalog-tab-icon">{getCategoryIcon(cat.icon)}</span>
+                  <span className="catalog-tab-label">{cat.label}</span>
+                  <span className="catalog-tab-count">{count}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        <button
+          type="button"
+          className="tabs-nav-btn right"
+          onClick={() => scrollTabs('right')}
+          title="Scroll categories right"
+          aria-label="Scroll right"
+        >
+          <ChevronRight size={16} />
+        </button>
       </div>
 
       {/* Tools Grid */}

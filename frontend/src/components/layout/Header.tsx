@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Zap, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { ThemeToggle } from '../common/ThemeToggle';
 
 const NAV_LINKS = [
   { to: '/', label: 'Home' },
+  { to: '/photo-size', label: 'Photo Size' },
   { to: '/photo-print', label: 'Photo Print' },
   { to: '/converters', label: 'All Tools' },
   { to: '/analyzer', label: 'File Inspector' },
-  { to: '/convert', label: 'Convert' },
   { to: '/formats', label: 'Formats' },
   { to: '/how-it-works', label: 'How It Works' },
 ];
@@ -34,7 +34,7 @@ export function Header() {
         <nav className="header-nav" aria-label="Main navigation">
           <Link to="/" className="header-logo" aria-label="ConvertX Home">
             <div className="logo-icon">
-              <Zap size={20} fill="currentColor" />
+              <img src="/multitask-icon.png" alt="ConvertX Icon" className="logo-multitask-img" />
             </div>
             <span className="logo-text">ConvertX</span>
           </Link>
@@ -55,8 +55,8 @@ export function Header() {
 
           <div className="header-right">
             <ThemeToggle showLabel />
-            <Link to="/convert" className="btn btn-primary btn-sm hide-mobile">
-              Start Converting
+            <Link to="/photo-size" className="btn btn-primary btn-sm hide-mobile">
+              Photo Resizer
             </Link>
             <button
               className="mobile-menu-btn btn btn-ghost btn-icon"

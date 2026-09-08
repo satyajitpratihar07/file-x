@@ -33,3 +33,9 @@ export function ToastContainer() {
     </div>
   );
 }
+
+export function showToast(type: 'success' | 'error' | 'info' | 'warning', message: string, duration?: number) {
+  useConversionStore.getState().addToast({ type, message, duration });
+}
+
+
