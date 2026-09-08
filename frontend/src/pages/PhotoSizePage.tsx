@@ -505,14 +505,18 @@ export function PhotoSizePage() {
     outFormat: string,
     qual: number,
     bg: string,
-    isTransparent: boolean
+    isTransparent: boolean,
+    customTargetBytes?: number | null,
+    colorMode?: 'color' | 'grayscale' | 'bw'
   ): Promise<ResizedResult> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = async () => {
         const baseName = item.name.replace(/\.[^/.]+$/, '');
-        const maxSizeBytes = imageEnableTargetSize
+        const maxSizeBytes = customTargetBytes !== undefined
+          ? customTargetBytes
+          : imageEnableTargetSize
           ? (imageTargetSizeUnit === 'MB' ? imageTargetSizeValue * 1024 * 1024 : imageTargetSizeValue * 1024)
           : null;
 
@@ -547,6 +551,21 @@ export function PhotoSizePage() {
 
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+          if (colorMode === 'grayscale' || colorMode === 'bw') {
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imgData.data;
+            for (let j = 0; j < data.length; j += 4) {
+              const avg = data[j] * 0.299 + data[j + 1] * 0.587 + data[j + 2] * 0.114;
+              if (colorMode === 'bw') {
+                const v = avg > 140 ? 255 : 0;
+                data[j] = v; data[j + 1] = v; data[j + 2] = v;
+              } else {
+                data[j] = avg; data[j + 1] = avg; data[j + 2] = avg;
+              }
+            }
+            ctx.putImageData(imgData, 0, 0);
+          }
+
           let currentBlob: Blob | null = null;
 
           if (outFormat === 'pdf') {
@@ -570,7 +589,6 @@ export function PhotoSizePage() {
             bestH = canvas.height;
 
             if (!maxSizeBytes || currentBlob.size <= maxSizeBytes) {
-              // Successfully met or stayed under target limit
               break;
             }
 
@@ -619,7 +637,9 @@ export function PhotoSizePage() {
     _targetH: number,
     outFormat: string,
     _qual: number,
-    colorMode: string
+    colorMode: string,
+    renderDpi?: number,
+    customTargetBytes?: number | null
   ): Promise<ResizedResult[]> => {
     const arrayBuffer = await item.file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
@@ -628,12 +648,14 @@ export function PhotoSizePage() {
     const numPages = pdf.numPages;
     const baseName = item.name.replace(/\.[^/.]+$/, '');
 
-    const maxSizeBytes = docEnableTargetSize
+    const maxSizeBytes = customTargetBytes !== undefined
+      ? customTargetBytes
+      : docEnableTargetSize
       ? (docTargetSizeUnit === 'MB' ? docTargetSizeValue * 1024 * 1024 : docTargetSizeValue * 1024)
       : null;
 
-    let baseDpi = docDpi;
-    if (docEnableTargetSize && maxSizeBytes) {
+    let baseDpi = renderDpi || docDpi;
+    if (maxSizeBytes) {
       const bytesPerPage = maxSizeBytes / numPages;
       if (bytesPerPage < 40 * 1024) {
         baseDpi = 72;
@@ -900,7 +922,7 @@ export function PhotoSizePage() {
         const item = files[i];
         setProgress(Math.round(((i + 1) / files.length) * 80));
 
-        if (activeTab === 'image' || item.type === 'image') {
+        if (activeTab === 'image') {
           let targetW = 1000;
           let targetH = 1000;
           const origW = item.originalWidth || 1000;
@@ -923,6 +945,10 @@ export function PhotoSizePage() {
             targetH = Math.max(10, Math.round((height / 25.4) * resolutionDpi));
           }
 
+          const targetSizeBytes = imageEnableTargetSize
+            ? (imageTargetSizeUnit === 'MB' ? imageTargetSizeValue * 1024 * 1024 : imageTargetSizeValue * 1024)
+            : null;
+
           const effectiveBg = isTransparentBg ? 'transparent' : bgColor === 'custom' ? customBgHex : bgColor;
           const res = await resizeImageFile(
             item,
@@ -931,10 +957,11 @@ export function PhotoSizePage() {
             format,
             quality,
             effectiveBg,
-            isTransparentBg
+            isTransparentBg,
+            targetSizeBytes
           );
           generatedResults.push(res);
-        } else if (activeTab === 'video' || item.type === 'video') {
+        } else if (activeTab === 'video') {
           let targetW = 1280;
           let targetH = 720;
           if (videoResolution === '1080p') {
@@ -952,8 +979,9 @@ export function PhotoSizePage() {
           const res = await resizeVideoFile(item, targetW, targetH);
           generatedResults.push(res);
         } else {
-          let targetW = 1654;
-          let targetH = 2338;
+          // Document / PDF compression mode
+          let targetW = 2480;
+          let targetH = 3508;
           if (docPagePreset === 'A4') {
             targetW = 2480; targetH = 3508;
           } else if (docPagePreset === 'Letter') {
@@ -962,10 +990,14 @@ export function PhotoSizePage() {
             targetW = 3508; targetH = 4960;
           } else if (docPagePreset === 'A5') {
             targetW = 1748; targetH = 2480;
-          } else if (item.originalWidth) {
+          } else if (item.originalWidth && item.originalHeight) {
             targetW = item.originalWidth;
             targetH = item.originalHeight;
           }
+
+          const docTargetSizeBytes = docEnableTargetSize
+            ? (docTargetSizeUnit === 'MB' ? docTargetSizeValue * 1024 * 1024 : docTargetSizeValue * 1024)
+            : null;
 
           const isPdf = item.file.type.includes('pdf') || /\.pdf$/i.test(item.name);
           if (isPdf) {
@@ -975,7 +1007,9 @@ export function PhotoSizePage() {
               targetH,
               docOutputFormat,
               docCompMode === 'extreme' ? 60 : docCompMode === 'recommended' ? 80 : 95,
-              docColorMode
+              docColorMode,
+              docDpi,
+              docTargetSizeBytes
             );
             generatedResults.push(...pdfRes);
           } else {
@@ -984,9 +1018,11 @@ export function PhotoSizePage() {
               targetW,
               targetH,
               docOutputFormat === 'pdf' ? 'pdf' : docOutputFormat,
-              80,
+              docCompMode === 'extreme' ? 60 : docCompMode === 'recommended' ? 80 : 95,
               '#ffffff',
-              false
+              false,
+              docTargetSizeBytes,
+              docColorMode
             );
             generatedResults.push(res);
           }
@@ -1298,8 +1334,13 @@ export function PhotoSizePage() {
                       <button
                         key={`${item.val}${item.unit}`}
                         type="button"
-                        className={`target-pill-btn ${imageTargetSizeValue === item.val && imageTargetSizeUnit === item.unit ? 'active' : ''}`}
-                        onClick={() => { setImageTargetSizeValue(item.val); setImageTargetSizeUnit(item.unit); }}
+                        className={`target-pill-btn ${imageEnableTargetSize && imageTargetSizeValue === item.val && imageTargetSizeUnit === item.unit ? 'active' : ''}`}
+                        onClick={() => {
+                          setImageEnableTargetSize(true);
+                          setImageTargetSizeValue(item.val);
+                          setImageTargetSizeUnit(item.unit);
+                          showToast('info', `Target file size limit set to ${item.val} ${item.unit}`);
+                        }}
                       >
                         {item.val} {item.unit}
                       </button>
@@ -1640,8 +1681,13 @@ export function PhotoSizePage() {
                       <button
                         key={`${item.val}${item.unit}`}
                         type="button"
-                        className={`target-pill-btn ${docTargetSizeValue === item.val && docTargetSizeUnit === item.unit ? 'active' : ''}`}
-                        onClick={() => { setDocTargetSizeValue(item.val); setDocTargetSizeUnit(item.unit); }}
+                        className={`target-pill-btn ${docEnableTargetSize && docTargetSizeValue === item.val && docTargetSizeUnit === item.unit ? 'active' : ''}`}
+                        onClick={() => {
+                          setDocEnableTargetSize(true);
+                          setDocTargetSizeValue(item.val);
+                          setDocTargetSizeUnit(item.unit);
+                          showToast('info', `Target document size limit set to ${item.val} ${item.unit}`);
+                        }}
                       >
                         {item.val} {item.unit}
                       </button>
