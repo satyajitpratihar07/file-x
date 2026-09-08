@@ -1,4 +1,9 @@
 import type { ConversionFileState, JobState, OutputFormat } from '../types';
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+
+// Configure PDF.js Worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 /**
  * Client-Side In-Browser Conversion Engine for Any-DoC.
@@ -243,6 +248,60 @@ function createSimpleImagePdf(jpegDataUrl: string, width: number, height: number
   return new Blob([pdfBytes], { type: 'application/pdf' });
 }
 
+/**
+ * Convert PDF document to Images (JPG, PNG, WEBP) or Text in-browser.
+ */
+async function convertPdfInBrowser(
+  file: File,
+  targetFormat: OutputFormat
+): Promise<{ blob: Blob; fileName: string }> {
+  const baseName = file.name.replace(/\.[^/.]+$/, '');
+  const arrayBuffer = await file.arrayBuffer();
+  const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+  const pdf = await loadingTask.promise;
+
+  if (targetFormat === 'txt') {
+    let fullText = '';
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map((item: any) => (item as any).str).join(' ');
+      fullText += `--- Page ${pageNum} ---\n` + pageText + '\n\n';
+    }
+    const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
+    return { blob, fileName: `${baseName}.txt` };
+  }
+
+  // Render first page or master canvas for preview/download
+  const page = await pdf.getPage(1);
+  const viewport = page.getViewport({ scale: 2.0 });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(viewport.width);
+  canvas.height = Math.round(viewport.height);
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: ctx, viewport } as any).promise;
+  }
+
+  let mimeType = 'image/jpeg';
+  let ext = 'jpg';
+  if (targetFormat === 'png') {
+    mimeType = 'image/png';
+    ext = 'png';
+  } else if (targetFormat === 'webp') {
+    mimeType = 'image/webp';
+    ext = 'webp';
+  }
+
+  const blob = await new Promise<Blob | null>((res) => {
+    canvas.toBlob((b) => res(b), mimeType, 0.92);
+  });
+
+  return { blob: blob || new Blob([file]), fileName: `${baseName}.${ext}` };
+}
+
 // In-memory local client converted blob registry for instant downloads
 const clientBlobs = new Map<string, Blob>();
 
@@ -271,9 +330,15 @@ export async function executeClientConversion(
 
       if (
         file.type.startsWith('image/') ||
-        file.name.match(/\.(jpg|jpeg|png|webp|bmp|gif|svg|ico|heic)$/i)
+        file.name.match(/\.(jpg|jpeg|png|webp|bmp|gif|svg|ico|heic|avif|tiff)$/i)
       ) {
         result = await convertImageInBrowser(file, outputFormat);
+      } else if (file.type.includes('pdf') || /\.pdf$/i.test(file.name)) {
+        if (outputFormat === 'pdf') {
+          result = { blob: file, fileName: file.name };
+        } else {
+          result = await convertPdfInBrowser(file, outputFormat);
+        }
       } else {
         result = await convertTextInBrowser(file, outputFormat);
       }

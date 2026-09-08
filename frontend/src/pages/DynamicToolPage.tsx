@@ -6,6 +6,7 @@ import { SpecificToolUploader } from '../components/upload/SpecificToolUploader'
 import { PhotoPrintPage } from './PhotoPrintPage';
 import { FileAnalyzerPage } from './FileAnalyzerPage';
 import { LatexStudioPage } from './LatexStudioPage';
+import { PhotoSizePage } from './PhotoSizePage';
 import { RecentConversions } from '../components/common/RecentConversions';
 import '../styles/globals.css';
 import '../styles/components.css';
@@ -15,7 +16,7 @@ export const DynamicToolPage: React.FC = () => {
   const tool = CONVERTER_TOOLS.find((t) => t.slug === slug);
 
   // If this route is photo print studio or analyzer, render their dedicated page
-  if (slug === 'photo-print') {
+  if (slug === 'photo-print' || slug === 'photo-print-studio') {
     return <PhotoPrintPage />;
   }
 
@@ -25,6 +26,16 @@ export const DynamicToolPage: React.FC = () => {
 
   if (slug === 'latex' || slug === 'latex-to-pdf' || slug === 'latex-studio' || slug === 'tex-to-pdf') {
     return <LatexStudioPage />;
+  }
+
+  if (
+    slug === 'photo-size' ||
+    slug === 'photo-resize' ||
+    slug === 'image-resizer' ||
+    slug === 'compress-image' ||
+    slug === 'compress-pdf'
+  ) {
+    return <PhotoSizePage />;
   }
 
   if (!tool) {

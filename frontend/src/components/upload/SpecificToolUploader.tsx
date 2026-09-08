@@ -22,69 +22,6 @@ import type { OutputFormat } from '../../types';
 
 const MAX_SIZE = 300 * 1024 * 1024; // 300MB
 
-// Build MIME / extension map for react-dropzone based on tool inputFormats
-function buildAcceptMap(inputFormats: string[]): Record<string, string[]> | undefined {
-  if (inputFormats.includes('ANY')) return undefined;
-
-  const acceptMap: Record<string, string[]> = {};
-
-  const mimeByExt: Record<string, string> = {
-    pdf: 'application/pdf',
-    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    doc: 'application/msword',
-    odt: 'application/vnd.oasis.opendocument.text',
-    rtf: 'application/rtf',
-    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    xls: 'application/vnd.ms-excel',
-    ods: 'application/vnd.oasis.opendocument.spreadsheet',
-    csv: 'text/csv',
-    tsv: 'text/tab-separated-values',
-    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    ppt: 'application/vnd.ms-powerpoint',
-    odp: 'application/vnd.oasis.opendocument.presentation',
-    jpg: 'image/jpeg',
-    jpeg: 'image/jpeg',
-    png: 'image/png',
-    webp: 'image/webp',
-    svg: 'image/svg+xml',
-    gif: 'image/gif',
-    bmp: 'image/bmp',
-    tiff: 'image/tiff',
-    tif: 'image/tiff',
-    heic: 'image/heic',
-    heif: 'image/heif',
-    ico: 'image/x-icon',
-    json: 'application/json',
-    xml: 'application/xml',
-    md: 'text/markdown',
-    markdown: 'text/markdown',
-    txt: 'text/plain',
-    log: 'text/plain',
-    py: 'text/x-python',
-    js: 'text/javascript',
-    ts: 'text/typescript',
-    jsx: 'text/jsx',
-    tsx: 'text/tsx',
-    html: 'text/html',
-    htm: 'text/html',
-    css: 'text/css',
-    sql: 'application/sql',
-    epub: 'application/epub+zip',
-    zip: 'application/zip',
-  };
-
-  inputFormats.forEach((fmt) => {
-    const cleanExt = fmt.toLowerCase().replace(/^\./, '');
-    const mime = mimeByExt[cleanExt] || `application/x-${cleanExt}`;
-    if (!acceptMap[mime]) {
-      acceptMap[mime] = [];
-    }
-    acceptMap[mime].push(`.${cleanExt}`);
-  });
-
-  return acceptMap;
-}
-
 interface SpecificToolUploaderProps {
   tool: ConverterTool;
 }
@@ -134,34 +71,15 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
     await uploadAndConvert();
   };
 
-  const acceptMap = buildAcceptMap(tool.inputFormats);
-
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
-      if (acceptedFiles.length > 0) {
-        addSelectedFiles(acceptedFiles);
+      const allFiles = [...acceptedFiles, ...(rejectedFiles?.map((r) => r.file) || [])].filter(Boolean);
+      if (allFiles.length > 0) {
+        addSelectedFiles(allFiles);
         addToast({
           type: 'success',
-          message: `Added ${acceptedFiles.length} file(s) to ${tool.title}`,
+          message: `Added ${allFiles.length} file(s) to ${tool.title}`,
         });
-      }
-
-      if (rejectedFiles.length > 0) {
-        const first = rejectedFiles[0];
-        if (first.errors?.[0]?.code === 'file-invalid-type') {
-          addToast({
-            type: 'error',
-            message: `This tool only accepts ${tool.inputFormats.map((f) => `.${f}`).join(', ')} files.`,
-            duration: 6000,
-          });
-        } else if (first.errors?.[0]?.code === 'file-too-large') {
-          addToast({ type: 'error', message: 'File too large (max 300MB)' });
-        } else {
-          addToast({
-            type: 'warning',
-            message: `File rejected: ${first.errors?.[0]?.message || 'Unsupported format'}`,
-          });
-        }
       }
     },
     [addSelectedFiles, addToast, tool]
@@ -169,7 +87,6 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
 
   const { getRootProps, getInputProps, isDragActive, isDragReject, open } = useDropzone({
     onDrop,
-    accept: acceptMap,
     maxSize: MAX_SIZE,
     maxFiles: 50,
     multiple: true,
