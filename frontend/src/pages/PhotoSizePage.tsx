@@ -497,7 +497,7 @@ export function PhotoSizePage() {
     return bytes;
   };
 
-  // Perform Image Resizing in Canvas (Supports Target File Size limit)
+  // Perform Image Resizing in Canvas (Strictly Matches Target File Size limit)
   const resizeImageFile = async (
     item: MediaFileItem,
     targetW: number,
@@ -511,22 +511,24 @@ export function PhotoSizePage() {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = async () => {
-        let currentW = targetW;
-        let currentH = targetH;
-        let effectiveQual = qual / 100;
-
+        const baseName = item.name.replace(/\.[^/.]+$/, '');
         const maxSizeBytes = imageEnableTargetSize
           ? (imageTargetSizeUnit === 'MB' ? imageTargetSizeValue * 1024 * 1024 : imageTargetSizeValue * 1024)
           : null;
 
+        let currentW = targetW;
+        let currentH = targetH;
+        let currentQual = qual / 100;
         let bestBlob: Blob | null = null;
-        const baseName = item.name.replace(/\.[^/.]+$/, '');
+        let bestW = currentW;
+        let bestH = currentH;
 
-        // Iterative compression if target size set
-        for (let iteration = 0; iteration < 8; iteration++) {
+        const maxIterations = maxSizeBytes ? 10 : 1;
+
+        for (let iter = 0; iter < maxIterations; iter++) {
           const canvas = document.createElement('canvas');
-          canvas.width = currentW;
-          canvas.height = currentH;
+          canvas.width = Math.max(16, currentW);
+          canvas.height = Math.max(16, currentH);
           const ctx = canvas.getContext('2d');
           if (!ctx) {
             reject(new Error('Canvas 2D context unavailable'));
@@ -538,44 +540,50 @@ export function PhotoSizePage() {
 
           if (!isTransparent && (outFormat === 'jpg' || outFormat === 'pdf' || bg !== 'transparent')) {
             ctx.fillStyle = bg;
-            ctx.fillRect(0, 0, currentW, currentH);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
           } else if (isTransparent && outFormat === 'png') {
-            ctx.clearRect(0, 0, currentW, currentH);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
           }
 
-          ctx.drawImage(img, 0, 0, currentW, currentH);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          let currentBlob: Blob | null = null;
 
           if (outFormat === 'pdf') {
-            const dataUrl = canvas.toDataURL('image/jpeg', effectiveQual);
+            const dataUrl = canvas.toDataURL('image/jpeg', currentQual);
             const jpegBytes = dataUrlToUint8Array(dataUrl);
-            const pdfBlob = createMultiPagePdf([{ jpegBytes, width: canvas.width, height: canvas.height }]);
-            bestBlob = pdfBlob;
-            if (!maxSizeBytes || pdfBlob.size <= maxSizeBytes || effectiveQual <= 0.2) break;
-            effectiveQual = Math.max(0.15, effectiveQual - 0.15);
-            continue;
-          }
-
-          let mimeType = 'image/jpeg';
-          if (outFormat === 'png') mimeType = 'image/png';
-          else if (outFormat === 'webp') mimeType = 'image/webp';
-          else if (outFormat === 'bmp') mimeType = 'image/bmp';
-
-          const blob = await new Promise<Blob | null>((res) => {
-            canvas.toBlob((b) => res(b), mimeType, effectiveQual);
-          });
-
-          bestBlob = blob;
-
-          if (!maxSizeBytes || !blob || blob.size <= maxSizeBytes || (effectiveQual <= 0.25 && currentW < 300)) {
-            break;
-          }
-
-          // Reduce quality first, then downscale if needed
-          if (effectiveQual > 0.35) {
-            effectiveQual = Math.max(0.2, effectiveQual - 0.18);
+            currentBlob = createMultiPagePdf([{ jpegBytes, width: canvas.width, height: canvas.height }]);
           } else {
-            currentW = Math.round(currentW * 0.82);
-            currentH = Math.round(currentH * 0.82);
+            let mimeType = 'image/jpeg';
+            if (outFormat === 'png') mimeType = 'image/png';
+            else if (outFormat === 'webp') mimeType = 'image/webp';
+            else if (outFormat === 'bmp') mimeType = 'image/bmp';
+
+            currentBlob = await new Promise<Blob | null>((res) => {
+              canvas.toBlob((b) => res(b), mimeType, currentQual);
+            });
+          }
+
+          if (currentBlob) {
+            bestBlob = currentBlob;
+            bestW = canvas.width;
+            bestH = canvas.height;
+
+            if (!maxSizeBytes || currentBlob.size <= maxSizeBytes) {
+              // Successfully met or stayed under target limit
+              break;
+            }
+
+            // Adaptively scale quality and dimensions to hit exact target size
+            if (currentQual > 0.35) {
+              const sizeRatio = maxSizeBytes / currentBlob.size;
+              currentQual = Math.max(0.15, Number((currentQual * Math.min(0.85, Math.sqrt(sizeRatio))).toFixed(2)));
+            } else {
+              const scaleDown = Math.max(0.5, Math.min(0.88, Math.sqrt(maxSizeBytes / currentBlob.size)));
+              currentW = Math.max(64, Math.round(currentW * scaleDown));
+              currentH = Math.max(64, Math.round(currentH * scaleDown));
+              currentQual = 0.55;
+            }
           }
         }
 
@@ -590,12 +598,12 @@ export function PhotoSizePage() {
 
         resolve({
           fileId: item.id,
-          name: `${baseName}_resized_${currentW}x${currentH}.${ext}`,
+          name: `${baseName}_resized_${bestW}x${bestH}.${ext}`,
           blob: bestBlob,
           downloadUrl,
           newSize: bestBlob.size,
-          newWidth: currentW,
-          newHeight: currentH,
+          newWidth: bestW,
+          newHeight: bestH,
           savedPercent: savedPct,
         });
       };
@@ -604,7 +612,7 @@ export function PhotoSizePage() {
     });
   };
 
-  // Perform PDF / Document Compression & Multi-Page PDF Generation
+  // Perform PDF / Document Compression & Multi-Page PDF Generation (Strictly Matches Target File Size limit)
   const resizePdfDocumentFile = async (
     item: MediaFileItem,
     targetW: number,
@@ -623,28 +631,25 @@ export function PhotoSizePage() {
     const maxSizeBytes = docEnableTargetSize
       ? (docTargetSizeUnit === 'MB' ? docTargetSizeValue * 1024 * 1024 : docTargetSizeValue * 1024)
       : null;
-    void maxSizeBytes;
 
-    let effectiveDpi = docDpi;
-    let effectiveQuality = docCompMode === 'extreme' ? 0.55 : docCompMode === 'recommended' ? 0.78 : 0.92;
-
-    if (docEnableTargetSize) {
-      if (docTargetSizeUnit === 'KB' && docTargetSizeValue <= 100) {
-        effectiveDpi = 72;
-        effectiveQuality = 0.5;
-      } else if (docTargetSizeUnit === 'KB' && docTargetSizeValue <= 300) {
-        effectiveDpi = 96;
-        effectiveQuality = 0.65;
+    let baseDpi = docDpi;
+    if (docEnableTargetSize && maxSizeBytes) {
+      const bytesPerPage = maxSizeBytes / numPages;
+      if (bytesPerPage < 40 * 1024) {
+        baseDpi = 72;
+      } else if (bytesPerPage < 120 * 1024) {
+        baseDpi = 96;
+      } else if (bytesPerPage < 300 * 1024) {
+        baseDpi = 150;
       }
     }
 
-    const renderedPagesData: { jpegBytes: Uint8Array; width: number; height: number; blob?: Blob; name?: string }[] = [];
-
+    // Step 1: Render all source pages to master high-quality canvases
+    const masterCanvases: HTMLCanvasElement[] = [];
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const unscaledViewport = page.getViewport({ scale: 1.0 });
-
-      const scale = targetW ? targetW / unscaledViewport.width : (effectiveDpi / 72);
+      const scale = targetW ? (targetW / unscaledViewport.width) : (baseDpi / 72);
       const viewport = page.getViewport({ scale });
 
       const canvas = document.createElement('canvas');
@@ -655,7 +660,6 @@ export function PhotoSizePage() {
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -665,7 +669,7 @@ export function PhotoSizePage() {
         const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imgData.data;
         for (let j = 0; j < data.length; j += 4) {
-          const avg = (data[j] * 0.299 + data[j + 1] * 0.587 + data[j + 2] * 0.114);
+          const avg = data[j] * 0.299 + data[j + 1] * 0.587 + data[j + 2] * 0.114;
           if (colorMode === 'bw') {
             const v = avg > 140 ? 255 : 0;
             data[j] = v; data[j + 1] = v; data[j + 2] = v;
@@ -676,73 +680,149 @@ export function PhotoSizePage() {
         ctx.putImageData(imgData, 0, 0);
       }
 
-      if (outFormat === 'pdf') {
-        const dataUrl = canvas.toDataURL('image/jpeg', effectiveQuality);
-        const jpegBytes = dataUrlToUint8Array(dataUrl);
-        renderedPagesData.push({
-          jpegBytes,
-          width: canvas.width,
-          height: canvas.height,
-        });
-      } else {
-        let mimeType = 'image/jpeg';
-        let ext = 'jpg';
-        if (outFormat === 'png') {
-          mimeType = 'image/png'; ext = 'png';
-        } else if (outFormat === 'webp') {
-          mimeType = 'image/webp'; ext = 'webp';
-        }
-
-        const pageBlob = await new Promise<Blob | null>((resolve) => {
-          canvas.toBlob((b) => resolve(b), mimeType, effectiveQuality);
-        });
-
-        if (pageBlob) {
-          const pageTag = numPages > 1 ? `_page${pageNum}` : '';
-          renderedPagesData.push({
-            jpegBytes: new Uint8Array(),
-            width: canvas.width,
-            height: canvas.height,
-            blob: pageBlob,
-            name: `${baseName}${pageTag}_compressed.${ext}`,
-          });
-        }
-      }
+      masterCanvases.push(canvas);
     }
 
+    if (masterCanvases.length === 0) {
+      throw new Error('Failed to render PDF pages');
+    }
+
+    // Step 2: If output format is PDF, perform adaptive multi-pass compression
     if (outFormat === 'pdf') {
-      const combinedPdfBlob = createMultiPagePdf(renderedPagesData);
-      const downloadUrl = URL.createObjectURL(combinedPdfBlob);
-      const savedPct = Math.max(0, Math.round(((item.originalSize - combinedPdfBlob.size) / item.originalSize) * 100));
+      let currentQuality = docCompMode === 'extreme' ? 0.60 : docCompMode === 'recommended' ? 0.80 : 0.92;
+      let currentScale = 1.0;
+      let bestPdfBlob: Blob | null = null;
+      let bestWidth = masterCanvases[0].width;
+      let bestHeight = masterCanvases[0].height;
+
+      const maxIters = maxSizeBytes ? 10 : 1;
+
+      for (let iter = 0; iter < maxIters; iter++) {
+        const pageData: { jpegBytes: Uint8Array; width: number; height: number }[] = [];
+
+        for (const master of masterCanvases) {
+          let encCanvas = master;
+          if (currentScale < 0.98) {
+            encCanvas = document.createElement('canvas');
+            encCanvas.width = Math.max(32, Math.round(master.width * currentScale));
+            encCanvas.height = Math.max(32, Math.round(master.height * currentScale));
+            const ctx = encCanvas.getContext('2d');
+            if (ctx) {
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = 'high';
+              ctx.drawImage(master, 0, 0, encCanvas.width, encCanvas.height);
+            }
+          }
+
+          const dataUrl = encCanvas.toDataURL('image/jpeg', currentQuality);
+          const jpegBytes = dataUrlToUint8Array(dataUrl);
+          pageData.push({
+            jpegBytes,
+            width: encCanvas.width,
+            height: encCanvas.height,
+          });
+        }
+
+        const candidatePdf = createMultiPagePdf(pageData);
+        bestPdfBlob = candidatePdf;
+        bestWidth = pageData[0]?.width || masterCanvases[0].width;
+        bestHeight = pageData[0]?.height || masterCanvases[0].height;
+
+        if (!maxSizeBytes || candidatePdf.size <= maxSizeBytes) {
+          // Stays strictly under target limit
+          break;
+        }
+
+        // Adjust quality and resolution scale to strictly meet target file size
+        const ratio = maxSizeBytes / candidatePdf.size;
+        if (currentQuality > 0.35) {
+          currentQuality = Math.max(0.12, Number((currentQuality * Math.min(0.85, Math.sqrt(ratio))).toFixed(2)));
+        } else {
+          currentScale = Math.max(0.25, Number((currentScale * Math.min(0.85, Math.sqrt(ratio))).toFixed(2)));
+          currentQuality = 0.50;
+        }
+      }
+
+      const finalBlob = bestPdfBlob || new Blob([], { type: 'application/pdf' });
+      const downloadUrl = URL.createObjectURL(finalBlob);
+      const savedPct = Math.max(0, Math.round(((item.originalSize - finalBlob.size) / item.originalSize) * 100));
 
       return [
         {
           fileId: item.id,
           name: `${baseName}_compressed.pdf`,
-          blob: combinedPdfBlob,
+          blob: finalBlob,
           downloadUrl,
-          newSize: combinedPdfBlob.size,
-          newWidth: renderedPagesData[0]?.width || 1200,
-          newHeight: renderedPagesData[0]?.height || 1600,
+          newSize: finalBlob.size,
+          newWidth: bestWidth,
+          newHeight: bestHeight,
           savedPercent: savedPct,
         },
       ];
     }
 
-    return renderedPagesData.map((p, idx) => {
-      const downloadUrl = URL.createObjectURL(p.blob!);
-      const savedPct = Math.max(0, Math.round(((item.originalSize - p.blob!.size) / item.originalSize) * 100));
-      return {
-        fileId: `${item.id}_${idx + 1}`,
-        name: p.name!,
-        blob: p.blob!,
-        downloadUrl,
-        newSize: p.blob!.size,
-        newWidth: p.width,
-        newHeight: p.height,
-        savedPercent: savedPct,
-      };
-    });
+    // Step 3: If output format is image (JPG, PNG, WEBP), encode each page
+    const pageResults: ResizedResult[] = [];
+    let mimeType = 'image/jpeg';
+    let ext = 'jpg';
+    if (outFormat === 'png') { mimeType = 'image/png'; ext = 'png'; }
+    else if (outFormat === 'webp') { mimeType = 'image/webp'; ext = 'webp'; }
+
+    for (let idx = 0; idx < masterCanvases.length; idx++) {
+      const master = masterCanvases[idx];
+      let currentW = master.width;
+      let currentH = master.height;
+      let currentQual = 0.80;
+      let pageBlob: Blob | null = null;
+
+      const pageMaxBytes = maxSizeBytes ? (maxSizeBytes / numPages) : null;
+      const maxIters = pageMaxBytes ? 8 : 1;
+
+      for (let iter = 0; iter < maxIters; iter++) {
+        const encCanvas = document.createElement('canvas');
+        encCanvas.width = currentW;
+        encCanvas.height = currentH;
+        const ctx = encCanvas.getContext('2d');
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(master, 0, 0, currentW, currentH);
+        }
+
+        pageBlob = await new Promise<Blob | null>((res) => {
+          encCanvas.toBlob((b) => res(b), mimeType, currentQual);
+        });
+
+        if (!pageMaxBytes || !pageBlob || pageBlob.size <= pageMaxBytes) {
+          break;
+        }
+
+        if (currentQual > 0.35) {
+          currentQual = Math.max(0.15, currentQual - 0.18);
+        } else {
+          currentW = Math.max(64, Math.round(currentW * 0.82));
+          currentH = Math.max(64, Math.round(currentH * 0.82));
+        }
+      }
+
+      if (pageBlob) {
+        const downloadUrl = URL.createObjectURL(pageBlob);
+        const savedPct = Math.max(0, Math.round(((item.originalSize - pageBlob.size) / item.originalSize) * 100));
+        const pageTag = numPages > 1 ? `_page${idx + 1}` : '';
+        pageResults.push({
+          fileId: `${item.id}_${idx + 1}`,
+          name: `${baseName}${pageTag}_compressed.${ext}`,
+          blob: pageBlob,
+          downloadUrl,
+          newSize: pageBlob.size,
+          newWidth: currentW,
+          newHeight: currentH,
+          savedPercent: savedPct,
+        });
+      }
+    }
+
+    return pageResults;
   };
 
   // Perform Video Compression
