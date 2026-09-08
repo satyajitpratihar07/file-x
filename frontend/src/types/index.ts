@@ -1,4 +1,4 @@
-export type OutputFormat = 'pdf' | 'jpg' | 'png' | 'webp';
+export type OutputFormat = 'pdf' | 'jpg' | 'png' | 'webp' | 'docx' | 'txt';
 
 export type FileStatus =
   | 'idle'

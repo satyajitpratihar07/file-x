@@ -3,6 +3,7 @@ import type { JobState, OutputFormat } from '../types';
 import { apiService } from '../services/api';
 import { subscribeToJobEvents } from '../services/sseClient';
 import { useRecentStore } from './recentStore';
+import { executeClientConversion } from '../services/clientConverter';
 
 interface Toast {
   id: string;
@@ -123,11 +124,54 @@ export const useConversionStore = create<ConversionStore>((set, get) => ({
         }
       }, 800);
     } catch (err) {
-      set({ isUploading: false, isConverting: false });
-      get().addToast({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Upload failed. Please try again.',
-      });
+      console.warn('Backend API unavailable. Processing conversion securely in-browser...', err);
+      try {
+        set({ isUploading: false, isConverting: true });
+        const clientJob = await executeClientConversion(
+          selectedFiles,
+          outputFormat,
+          (pct) => set({ uploadProgress: pct })
+        );
+
+        set({
+          isUploading: false,
+          isConverting: false,
+          currentJob: clientJob,
+        });
+
+        clientJob.files.forEach((f) => {
+          if (f.status === 'completed') {
+            useRecentStore.getState().addRecentItem({
+              jobId: clientJob.jobId,
+              fileId: f.fileId,
+              originalName: f.originalName,
+              outputFormat: f.outputFormat,
+              outputName: f.outputName || f.originalName,
+              sizeBytes: f.sizeBytes,
+              outputSizeBytes: f.outputSizeBytes,
+            });
+          }
+        });
+
+        const completedCount = clientJob.files.filter((f) => f.status === 'completed').length;
+        if (completedCount > 0) {
+          get().addToast({
+            type: 'success',
+            message: `Converted ${completedCount} file${completedCount > 1 ? 's' : ''} securely in-browser!`,
+          });
+        } else {
+          get().addToast({
+            type: 'error',
+            message: 'Conversion failed for selected files.',
+          });
+        }
+      } catch (clientErr: any) {
+        set({ isUploading: false, isConverting: false });
+        get().addToast({
+          type: 'error',
+          message: clientErr.message || 'Conversion failed. Please try again.',
+        });
+      }
     }
   },
 

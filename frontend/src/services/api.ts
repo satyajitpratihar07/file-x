@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { ApiResponse, UploadResponse, JobState, SupportedFormat, OutputFormat } from '../types';
+import { getClientBlob } from './clientConverter';
 
 export const BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:3001');
 
@@ -70,6 +71,10 @@ export const apiService = {
    * Get download URL for a single file.
    */
   getFileDownloadUrl(jobId: string, fileId: string): string {
+    const clientBlob = getClientBlob(fileId);
+    if (clientBlob) {
+      return URL.createObjectURL(clientBlob);
+    }
     return `${BASE_URL}/api/download/${jobId}/${fileId}`;
   },
 
@@ -91,5 +96,3 @@ export const apiService = {
     return res.data.data;
   },
 };
-
-export { BASE_URL };
