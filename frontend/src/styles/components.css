@@ -4159,6 +4159,219 @@ textarea.form-input { resize: vertical; min-height: 120px; }
   }
 }
 
+/* ─── Conversion Stepper Automation & Visual Flow ───────────────────────── */
+.conversion-stepper {
+  width: 100%;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+}
 
+.stepper-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+}
 
+.stepper-item-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
 
+.stepper-item-wrapper:last-child {
+  flex: 0 0 auto;
+}
+
+.stepper-node {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: transparent;
+  border: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius-lg);
+  cursor: default;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  user-select: none;
+}
+
+.stepper-node.clickable {
+  cursor: pointer;
+}
+
+.stepper-node.clickable:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.stepper-icon-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+/* Node Status: Pending */
+.stepper-node.pending .stepper-icon-circle {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--color-text-3);
+}
+
+.stepper-node.pending .stepper-label-box {
+  opacity: 0.45;
+}
+
+/* Node Status: Active */
+.stepper-node.active .stepper-icon-circle {
+  background: linear-gradient(135deg, var(--color-primary), #4f46e5);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.65);
+  animation: stepperPulse 2s infinite ease-in-out;
+}
+
+.stepper-node.active .stepper-label-box {
+  opacity: 1;
+  color: var(--color-text-1);
+}
+
+.stepper-node.active .stepper-label-desktop,
+.stepper-node.active .stepper-label-mobile {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Node Status: Completed */
+.stepper-node.completed .stepper-icon-circle {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: 1.5px solid rgba(52, 211, 153, 0.5);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.stepper-node.completed .stepper-label-box {
+  opacity: 0.85;
+}
+
+.stepper-label-box {
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.2s ease;
+}
+
+.stepper-label-desktop {
+  font-size: 0.825rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.stepper-label-mobile {
+  display: none;
+  font-size: 0.775rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.stepper-substatus {
+  font-size: 0.6875rem;
+  color: var(--color-text-3);
+  line-height: 1.2;
+}
+
+.stepper-node.completed .stepper-substatus {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.stepper-node.active .stepper-substatus {
+  color: #818cf8;
+  font-weight: 600;
+}
+
+/* Stepper Connecting Lines */
+.stepper-line {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 0.5rem;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.stepper-line.completed {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+.stepper-line.active-flow {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.stepper-line.active-flow .stepper-line-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, var(--color-primary), #6366f1);
+  animation: lineFlow 1.8s infinite linear;
+}
+
+@keyframes stepperPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.85);
+  }
+}
+
+@keyframes lineFlow {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@media (max-width: 640px) {
+  .conversion-stepper {
+    padding: 0.5rem 0.5rem;
+    margin-bottom: 0.85rem;
+  }
+  .stepper-label-desktop {
+    display: none;
+  }
+  .stepper-label-mobile {
+    display: block;
+  }
+  .stepper-node {
+    padding: 0.2rem 0.35rem;
+    gap: 0.45rem;
+  }
+  .stepper-icon-circle {
+    width: 26px;
+    height: 26px;
+  }
+  .stepper-icon-circle svg {
+    width: 13px;
+    height: 13px;
+  }
+  .stepper-line {
+    margin: 0 0.25rem;
+  }
+  .stepper-substatus {
+    display: none;
+  }
+}

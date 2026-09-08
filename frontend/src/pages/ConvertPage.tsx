@@ -7,6 +7,7 @@ import { ResultPanel } from '../components/results/ResultPanel';
 import { useConversionStore } from '../store/conversionStore';
 import { formatBytes } from '../utils/fileUtils';
 import { RecentConversions } from '../components/common/RecentConversions';
+import { ConversionStepper, type StepState } from '../components/common/ConversionStepper';
 
 export function ConvertPage({ hideHeader = false }: { hideHeader?: boolean } = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -29,6 +30,12 @@ export function ConvertPage({ hideHeader = false }: { hideHeader?: boolean } = {
   const showQueue = hasFiles && !currentJob && !isConverting;
   const showResults = !!currentJob && !isConverting;
 
+  const currentStep: StepState = showResults
+    ? 'download'
+    : (hasFiles || isConverting)
+    ? 'convert'
+    : 'upload';
+
   // Auto-scroll down when conversion finishes
   useEffect(() => {
     if (showResults) {
@@ -49,6 +56,16 @@ export function ConvertPage({ hideHeader = false }: { hideHeader?: boolean } = {
     }
   }, [showQueue, isActive]);
 
+  const handleStepClick = (step: StepState) => {
+    if (step === 'upload') {
+      containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (step === 'convert') {
+      queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else if (step === 'download') {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const handleConvert = async () => {
     containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     await uploadAndConvert();
@@ -64,6 +81,9 @@ export function ConvertPage({ hideHeader = false }: { hideHeader?: boolean } = {
       )}
 
       <div ref={containerRef} className="converter-container">
+        {/* Step-by-Step Flow Bar */}
+        <ConversionStepper currentStep={currentStep} onStepClick={handleStepClick} />
+
         {/* Upload Zone — always shown unless results are displaying */}
         {!showResults && (
           <section className="upload-section" aria-label="File upload">

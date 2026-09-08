@@ -19,6 +19,7 @@ import { FileCard } from './FileCard';
 import { ResultPanel } from '../results/ResultPanel';
 import { formatBytes } from '../../utils/fileUtils';
 import type { OutputFormat } from '../../types';
+import { ConversionStepper, type StepState } from '../common/ConversionStepper';
 
 const MAX_SIZE = 300 * 1024 * 1024; // 300MB
 
@@ -68,6 +69,12 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
   const showQueue = hasFiles && !currentJob && !isConverting;
   const showResults = !!currentJob && !isConverting;
 
+  const currentStep: StepState = showResults
+    ? 'download'
+    : (hasFiles || isConverting)
+    ? 'convert'
+    : 'upload';
+
   // Auto-scroll down when conversion finishes
   useEffect(() => {
     if (showResults) {
@@ -87,6 +94,16 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
       return () => clearTimeout(timer);
     }
   }, [showQueue, isActive]);
+
+  const handleStepClick = (step: StepState) => {
+    if (step === 'upload') {
+      containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (step === 'convert') {
+      queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else if (step === 'download') {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   const handleConvert = async () => {
     containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -135,6 +152,9 @@ export function SpecificToolUploader({ tool }: SpecificToolUploaderProps) {
 
   return (
     <div ref={containerRef} className="specific-tool-uploader">
+      {/* ─── Step Navigation ─── */}
+      <ConversionStepper currentStep={currentStep} onStepClick={handleStepClick} />
+
       {/* ─── Specific Tool Header Banner ─── */}
       <div className="tool-upload-hero card animate-fadeIn">
         <div className="tool-upload-badge">

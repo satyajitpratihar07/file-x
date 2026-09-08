@@ -10,6 +10,7 @@ import {
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { showToast } from '../components/ui/Toast';
+import { ConversionStepper, type StepState } from '../components/common/ConversionStepper';
 
 // Configure PDF.js Worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
@@ -189,6 +190,13 @@ export function PhotoSizePage() {
 
   const resultsRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
+  const uploadRef = useRef<HTMLDivElement>(null);
+
+  const currentStep: StepState = results.length > 0
+    ? 'download'
+    : (files.length > 0 || isProcessing)
+    ? 'convert'
+    : 'upload';
 
   // Auto-scroll down when processing completes or results are ready
   useEffect(() => {
@@ -209,6 +217,16 @@ export function PhotoSizePage() {
       return () => clearTimeout(timer);
     }
   }, [files.length, results.length]);
+
+  const handleStepClick = (step: StepState) => {
+    if (step === 'upload') {
+      uploadRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (step === 'convert') {
+      controlsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else if (step === 'download') {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   const activeFile = files[activeFileIndex] || null;
 
@@ -1142,8 +1160,12 @@ export function PhotoSizePage() {
       </div>
 
       <div className="container resizer-content-container">
+        {/* Step-by-Step Flow Bar */}
+        <ConversionStepper currentStep={currentStep} onStepClick={handleStepClick} />
+
         {/* ─── 1. Drop Zone Box ─── */}
         <div
+          ref={uploadRef}
           {...getRootProps()}
           className={`resizer-dropzone-box ${isDragActive ? 'drag-over' : ''} ${files.length > 0 ? 'has-files' : ''}`}
         >

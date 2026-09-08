@@ -9,6 +9,7 @@ import { FileCard } from '../components/upload/FileCard';
 import { ResultPanel } from '../components/results/ResultPanel';
 import { useConversionStore } from '../store/conversionStore';
 import { RecentConversions } from '../components/common/RecentConversions';
+import { ConversionStepper, type StepState } from '../components/common/ConversionStepper';
 
 const FEATURES = [
   {
@@ -125,6 +126,12 @@ export function HomePage() {
   const isActive = isUploading || isConverting;
   const showResults = !!currentJob && !isConverting;
 
+  const currentStep: StepState = showResults
+    ? 'download'
+    : (hasFiles || isConverting)
+    ? 'convert'
+    : 'upload';
+
   // Auto-scroll down when conversion finishes
   useEffect(() => {
     if (showResults) {
@@ -144,6 +151,16 @@ export function HomePage() {
       return () => clearTimeout(timer);
     }
   }, [hasFiles, showResults, isActive]);
+
+  const handleStepClick = (step: StepState) => {
+    if (step === 'upload') {
+      converterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (step === 'convert') {
+      queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else if (step === 'download') {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   const handleConvertNow = async () => {
     converterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -172,6 +189,8 @@ export function HomePage() {
 
           {/* ─── Inline Converter ─────────────────────────────────────── */}
           <div ref={converterRef} className="hero-converter animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+            <ConversionStepper currentStep={currentStep} onStepClick={handleStepClick} />
+
             {!showResults && <DropZone />}
 
             {hasFiles && !currentJob && !isConverting && (
