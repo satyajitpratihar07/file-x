@@ -1308,3 +1308,34 @@
     border-top: 1px solid var(--color-border);
   }
 }
+
+@media (max-width: 600px) {
+  .studio-topbar {
+    padding: 8px 10px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .starter-presets-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .starter-preset-card {
+    padding: 10px 8px !important;
+  }
+  .starter-preset-icon {
+    font-size: 1.4rem !important;
+  }
+  .starter-preset-title {
+    font-size: 0.8rem !important;
+  }
+  .starter-preset-desc {
+    font-size: 0.65rem !important;
+  }
+  .stage-container {
+    min-height: 260px;
+    padding: 8px;
+  }
+  .canvas-sheet-wrapper {
+    max-width: 95vw;
+  }
+}
