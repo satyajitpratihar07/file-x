@@ -1,0 +1,16 @@
+{
+  "name": "file-x-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "build:backend": "npm run build --prefix backend",
+    "build:all": "npm run build --prefix backend && npm run build --prefix frontend",
+    "start": "node backend/dist/server.js"
+  }
+}
