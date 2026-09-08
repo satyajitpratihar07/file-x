@@ -118,6 +118,7 @@ const IMAGE_PRESETS = [
   { icon: '🎬', label: 'YouTube Thumbnail (1280×720)', w: 1280, h: 720, unit: 'pixels' as UnitType, dpi: 72 },
   { icon: '⚡', label: 'Compress Under 100 KB (Govt / Forms)', targetKb: 95 },
   { icon: '⚡', label: 'Compress Under 50 KB (Signatures / Badges)', targetKb: 48 },
+  { icon: '🖨️', label: 'Grayscale B&W Photo', color: 'grayscale' as const },
 ];
 
 const VIDEO_PRESETS = [
@@ -152,6 +153,7 @@ export function PhotoSizePage() {
   const [resolutionDpi, setResolutionDpi] = useState<number>(72);
   const [format, setFormat] = useState<string>('jpg');
   const [quality, setQuality] = useState<number>(90);
+  const [imageColorMode, setImageColorMode] = useState<'color' | 'grayscale' | 'bw'>('color');
   const [bgColor, setBgColor] = useState<string>('#ffffff');
   const [isTransparentBg, setIsTransparentBg] = useState<boolean>(false);
   const [customBgHex, setCustomBgHex] = useState<string>('#ffffff');
@@ -958,7 +960,8 @@ export function PhotoSizePage() {
             quality,
             effectiveBg,
             isTransparentBg,
-            targetSizeBytes
+            targetSizeBytes,
+            imageColorMode
           );
           generatedResults.push(res);
         } else if (activeTab === 'video') {
@@ -1226,6 +1229,9 @@ export function PhotoSizePage() {
                     setImageTargetSizeValue(p.targetKb);
                     setImageTargetSizeUnit('KB');
                     showToast('info', `Target size limit set to ${p.targetKb} KB`);
+                  } else if ('color' in p && (p as any).color) {
+                    setImageColorMode((p as any).color);
+                    showToast('info', `Color mode set to ${(p as any).color === 'grayscale' ? 'Grayscale B&W' : (p as any).color}`);
                   }
                 }}
               >
@@ -1436,6 +1442,21 @@ export function PhotoSizePage() {
                       <option value="gif">GIF</option>
                       <option value="bmp">BMP</option>
                       <option value="pdf">PDF Document (.pdf)</option>
+                    </select>
+                    <ChevronDown size={14} className="select-chevron" />
+                  </div>
+                </div>
+
+                <div className="resizer-setting-box">
+                  <label className="field-title">Color Mode</label>
+                  <div className="resizer-select-styled">
+                    <select
+                      value={imageColorMode}
+                      onChange={(e) => setImageColorMode(e.target.value as any)}
+                    >
+                      <option value="color">Full Color (Original)</option>
+                      <option value="grayscale">Grayscale (B&W)</option>
+                      <option value="bw">Monochrome (High Contrast B&W)</option>
                     </select>
                     <ChevronDown size={14} className="select-chevron" />
                   </div>
