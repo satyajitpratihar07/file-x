@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="ConvertX — Universal file converter. Convert documents, images, spreadsheets, presentations, and code to PDF, JPG, PNG, or WebP. Free, fast, secure, no registration required." />
+    <meta name="keywords" content="file converter, PDF converter, image converter, DOCX to PDF, PNG to JPG, convert files online, free converter" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="ConvertX — Universal File Converter" />
+    <meta property="og:description" content="Convert any file to PDF, JPG, PNG, or WebP. Free, secure, no registration." />
+    <meta property="og:type" content="website" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>ConvertX — Universal File Converter | PDF, JPG, PNG</title>
+
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('convertx_theme_preference');
+          var theme = saved === 'dark' ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.classList.add('theme-' + theme);
+          var metaTheme = document.querySelector('meta[name="theme-color"]');
+          if (metaTheme) {
+            metaTheme.setAttribute('content', theme === 'dark' ? '#08091a' : '#ffffff');
+          }
+        } catch(e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
